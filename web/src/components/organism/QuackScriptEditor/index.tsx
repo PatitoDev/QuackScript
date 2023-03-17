@@ -30,11 +30,11 @@ const QuackScriptEditor = () => {
         const tokens = lexer.convertToTokens(quackCode);
         const parsedOutcome = parser.parse(tokens);
         console.log('tree: ', parsedOutcome);
-        const result = interpeter.execute(parsedOutcome);
-        console.log('outcome: ', result);
+        //const result = interpeter.execute(parsedOutcome);
+        //console.log('outcome: ', result);
 
-        //js = transpiler.transpile(quackCode);
-        js = String(result) ?? 'error';
+        js = transpiler.transpile(quackCode);
+        //js = String(result) ?? 'error';
     } catch (e) {
         js = (e as Error).message;
     }

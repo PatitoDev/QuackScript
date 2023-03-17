@@ -1,30 +1,31 @@
 import styled from 'styled-components';
+import Button from '../../../atoms/Button';
 import Section from '../../../template/Section';
 
 export const MainContainer = styled(Section)`
     justify-content: center;
-    max-height: 760px;
+    max-height: 700px;
     overflow: hidden;
 `;
 
 export const Container = styled.div`
     display: flex;
     flex-direction: column;
-    width: 50% !important;
-    max-width: 803px; 
     align-items: flex-start;
     > * {
         margin-bottom: 0.5rem;
     }
+    > ${Button} {
+        margin-top: 5em;
+    }
 `;
 
 export const Image = styled.div`
-    width: 50%;
     position: relative;
     left: 0;
     bottom: 0;
-    width: 918px;
-    height: 656px;
+    width: 791px;
+    height: 507px;
     > img {
         min-width: 1068px;
         min-height: 1040px;

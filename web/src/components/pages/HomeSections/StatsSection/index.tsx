@@ -3,7 +3,7 @@ import Section from '../../../template/Section';
 
 const StatsSection = () => (
     <Section bgColor="black">
-        <Typography variant="HEADING" textColor="white">
+        <Typography variant="heading">
             The numbers speak for themselves
         </Typography>
     </Section>

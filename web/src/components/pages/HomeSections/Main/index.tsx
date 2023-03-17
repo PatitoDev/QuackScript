@@ -6,20 +6,17 @@ const MainHome = () => (
     <S.MainContainer>
         <S.Container>
             <Typography 
-                variant="TITLE" 
+                variant="title" 
                 textColor="primary"
-                weight="bold"
             >QuackScript</Typography>
             <Typography 
-                variant="TITLE" 
-                textColor="white"
-                weight="bold"
+                variant="title" 
             >game development has never been this easy</Typography>
             <Typography
-                variant="BODY" 
+                variant="body" 
                 textColor="gray"
             >Game ready and compatible with web and mobile devices</Typography>
-            <Button variant="OUTLINE" >Get Started</Button>
+            <Button variant="outline" >Get Started</Button>
         </S.Container>
         <S.Image>
             <img alt='logo' src="./img/DuckAvatarMd.png" />

@@ -6,7 +6,7 @@ const Link = styled.a<{
     cursor: pointer;
     color: ${({ theme }) => theme.colors.white};
     font-weight: bold;
-    font-size: 20px;
+    font-size: 18px;
 
     ${({ selected = false, theme }) => selected && css`
         box-shadow: ${theme.colors.primary} 0 5px 0px;

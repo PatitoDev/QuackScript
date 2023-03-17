@@ -1,33 +1,48 @@
 import Styled, { css, DefaultTheme } from 'styled-components';
 
-export type TypographyVariant = 'TITLE' | 'HEADING' | 'BODY' | 'INFO';
+export type TypographyVariant = 'title' | 'heading' | 'body' | 'info';
 
 const Typography = Styled.span<{
     variant?: TypographyVariant,
     textColor?: keyof DefaultTheme['colors'],
-    weight?: 'bold' | 'normal'
+    weight?: 'bold' | 'normal',
+    block?: boolean,
+    mb?: string,
 }>`
     font-family: Poppins;
-    font-weight: ${({ weight = 'normal' }) => weight};
+
+    ${({ mb }) => mb && css`
+        margin-bottom: ${mb};
+    `}
+
+    ${({ block }) => block && css`
+        display: block;
+    `}
 
     ${({ theme, textColor = 'white' }) =>  css`
         color: ${theme.colors[textColor]};
     `}
 
-    ${({ variant = 'BODY' }) => variant === 'TITLE' && css`
-        font-size: 64px;
+    ${({ variant = 'body' }) => variant === 'title' && css`
+        font-size: 42px;
+        font-weight: bold;
     `}
 
-    ${({ variant = 'BODY' }) => variant === 'HEADING' && css`
-        font-size: 40px;
-    `}
-
-    ${({ variant = 'BODY' }) => variant === 'BODY' && css`
+    ${({ variant = 'body' }) => variant === 'heading' && css`
         font-size: 32px;
+        font-weight: bold;
     `}
 
-    ${({ variant = 'BODY' }) => variant === 'INFO' && css`
-        font-size: 20px;
+    ${({ variant = 'body' }) => variant === 'body' && css`
+        font-size: 18px;
+    `}
+
+    ${({ variant = 'body' }) => variant === 'info' && css`
+        font-size: 14px;
+    `}
+
+    ${({ weight }) => weight && css`
+        font-weight: ${weight};
     `}
 `;
 

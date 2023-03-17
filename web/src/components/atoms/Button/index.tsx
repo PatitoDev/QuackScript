@@ -1,17 +1,19 @@
 import styled, { css } from 'styled-components';
 
-export type ButtonVariant = 'SOLID' | 'OUTLINE';
+export type ButtonVariant = 'solid' | 'outline';
 
 const Button = styled.button<{
     variant?: ButtonVariant
 }>`
+    cursor: pointer;
     border: none;
     border-radius: 5px;
-    padding: 25px 45px;
-    font-size: 36px;
+    padding: 16px 26px;
+    font-size: 20px;
+    font-weight: bold;
 
-    ${({ variant = 'SOLID', theme }) => variant === 'OUTLINE' && css`
-        box-shadow: inset 0 0 0 7px ${theme.colors.primary};
+    ${({ variant = 'solid', theme }) => variant === 'outline' && css`
+        box-shadow: inset 0 0 0 4px ${theme.colors.primary};
         color: ${theme.colors.primary};
         background-color: transparent;
         :hover {
@@ -20,14 +22,15 @@ const Button = styled.button<{
         }
     `}
 
-    ${({ variant = 'SOLID', theme }) => variant === 'SOLID' && css`
+    ${({ variant = 'solid', theme }) => variant === 'solid' && css`
         color: ${theme.colors.black};
         background-color: ${theme.colors.primary};
     `}
 
     :focus-within {
         outline: none;
-        box-shadow: inset 0 0 0 7px ${({ theme }) => theme.colors.black};
+        background-color: ${({ theme }) => theme.colors.darkGray};
+        box-shadow: inset 0 0 0 4px ${({ theme }) => theme.colors.darkGray};
     }
 `;
 

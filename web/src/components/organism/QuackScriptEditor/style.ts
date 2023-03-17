@@ -3,14 +3,19 @@ import styled, { css } from 'styled-components';
 export const Container = styled.div`
     margin-top: 1em;
     background-color: ${({ theme }) => theme.colors.black};
-    padding: 0 0.5em 0.5em 0.5em;
-    border-radius: 5px;
+    padding: 0 1.5em 1.5em 1.5em;
+    border-radius: 10px;
     max-width: 100%;
 `;
 
 export const CodeWindowContent = styled.div`
     display: flex;
     max-width: 100%;
+    > * {
+        // code editor
+        border-radius: 5px;
+        overflow: hidden;
+    }
 `;
 
 export const CodeWindowHeader = styled.div`

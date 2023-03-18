@@ -9,7 +9,7 @@ export default class Interpreter {
     }
 
     private dfsInOrder = (node: BinaryExpressionNode | LiteralNode<string | number>): number => {
-        if (node.type === 'Literal') {
+        if (node.type === 'NumberLiteral') {
             return (node as LiteralNode<number>).value;
         }
 

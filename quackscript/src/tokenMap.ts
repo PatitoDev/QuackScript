@@ -157,11 +157,11 @@ export const tokenMap: Partial<Record<TokenType, {
         js: 'const',
     } ,
     'ASSIGNMENT_OPERATOR': {
-        regex: /^<->/,
+        regex: /^<-/,
         js: '=',
     },
     'ASSIGNMENT_OBJECT': {
-        regex: /^<-/,
+        regex: /^<->/,
         js: ':',
     } ,
     'BRACKET_OPEN': {

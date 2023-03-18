@@ -13,7 +13,7 @@ export const CodeWindowContent = styled.div`
     > * {
         // code editor
         border-radius: 5px;
-        overflow: hidden;
+        //overflow: hidden;
     }
     > :last-child {
         margin-top: 1em;

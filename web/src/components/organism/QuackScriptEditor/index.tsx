@@ -1,14 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { TbMinusVertical } from 'react-icons/all';
+import { useState } from 'react';
 import CodeEditor from '../../molecules/CodeEditor';
 import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser, Transpiler } from '../../../../../quackscript/src';
 
-const defaultQuackTextValue = 'QUACK test <-> \'hello world\'🦆' + '\nquackprint(:test:)🦆';
-const EDITOR_OPTIONS = {
-    fontSize: 23,
-};
+const defaultQuackTextValue = 'QUACK test <- \'hello world\'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) => {:\n\tquackprint(:test:)🦆\n:}🦆';
 
 const transpiler = new Transpiler();
 const lexer = new Lexer();
@@ -17,8 +13,6 @@ const interpeter = new Interpreter();
 
 const QuackScriptEditor = () => {
     const [quackCode, setQuackCode] = useState<string>(defaultQuackTextValue);
-    const [editorSize, setEditorSize] = useState<number>(2000);
-    const lastPositionRef = useRef<number | null>(null);
 
     const onQuackCodeChange = (value:string | undefined) => {
         setQuackCode(value ?? '');
@@ -41,31 +35,6 @@ const QuackScriptEditor = () => {
         js = (e as Error).message;
     }
 
-    const onMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
-        lastPositionRef.current = e.screenX;
-    };
-
-    useEffect(() => {
-        const onMouseMove = (e:MouseEvent) => {
-            if (!lastPositionRef.current) return;
-            const diff = e.screenX - lastPositionRef.current;
-            setEditorSize((prev) => prev + diff);
-            lastPositionRef.current = e.screenX;
-        };
-
-        const onMouseUp = (e:MouseEvent) => {
-            lastPositionRef.current = null;
-        };
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-    
-        return () => {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-        };
-    }, []);
-
     return (
         <S.Container>
             <S.CodeWindowHeader>
@@ -77,13 +46,11 @@ const QuackScriptEditor = () => {
             <S.CodeWindowContent>
                 <CodeEditor 
                     onChange={onQuackCodeChange}
-                    options={{ ...EDITOR_OPTIONS, automaticLayout: true}}
                     value={defaultQuackTextValue} 
                     language="quackscript" />
                 <CodeEditor
-                    height='10em'
+                    height='20em'
                     language='json'
-                    options={{ ...EDITOR_OPTIONS, automaticLayout: true}}
                     value={js}
                 />
             </S.CodeWindowContent>

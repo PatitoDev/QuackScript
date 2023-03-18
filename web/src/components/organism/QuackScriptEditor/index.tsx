@@ -4,7 +4,7 @@ import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser, Transpiler } from '../../../../../quackscript/src';
 
-const defaultQuackTextValue = 'QUACK test <- \'hello world\'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) => {:\n\tquackprint(:test:)🦆\n:}🦆';
+const defaultQuackTextValue = 'QUACK test <- \'hello world\'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) :> {:\n\tquackprint(:test:)🦆\n:}🦆';
 
 const transpiler = new Transpiler();
 const lexer = new Lexer();

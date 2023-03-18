@@ -10,7 +10,6 @@ const EDITOR_OPTIONS = {
     fontSize: 23,
 };
 
-
 const transpiler = new Transpiler();
 const lexer = new Lexer();
 const parser = new Parser();
@@ -30,10 +29,13 @@ const QuackScriptEditor = () => {
         const tokens = lexer.convertToTokens(quackCode);
         const parsedOutcome = parser.parse(tokens);
         console.log('tree: ', parsedOutcome);
+        if (parsedOutcome) {
+            js = JSON.stringify(parsedOutcome);
+        }
         //const result = interpeter.execute(parsedOutcome);
         //console.log('outcome: ', result);
 
-        js = transpiler.transpile(quackCode);
+        //js = transpiler.transpile(quackCode);
         //js = String(result) ?? 'error';
     } catch (e) {
         js = (e as Error).message;
@@ -74,15 +76,13 @@ const QuackScriptEditor = () => {
 
             <S.CodeWindowContent>
                 <CodeEditor 
-                    width={editorSize}
                     onChange={onQuackCodeChange}
                     options={{ ...EDITOR_OPTIONS, automaticLayout: true}}
                     value={defaultQuackTextValue} 
                     language="quackscript" />
-                <S.Divider onMouseDown={onMouseDown} >
-                    <TbMinusVertical size='5em' />
-                </S.Divider>
                 <CodeEditor
+                    height='10em'
+                    language='json'
                     options={{ ...EDITOR_OPTIONS, automaticLayout: true}}
                     value={js}
                 />

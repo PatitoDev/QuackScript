@@ -1,4 +1,4 @@
-export type TokenType = 'ASSIGNMENT' |
+export type TokenType = 'ASSIGNMENT_OPERATOR' |
 'ARROW_FUNCTION' |
 'AND' |
 'OR' |

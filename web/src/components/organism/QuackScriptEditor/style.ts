@@ -9,12 +9,14 @@ export const Container = styled.div`
 `;
 
 export const CodeWindowContent = styled.div`
-    display: flex;
     max-width: 100%;
     > * {
         // code editor
         border-radius: 5px;
         overflow: hidden;
+    }
+    > :last-child {
+        margin-top: 1em;
     }
 `;
 

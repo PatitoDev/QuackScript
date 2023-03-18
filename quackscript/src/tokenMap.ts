@@ -156,7 +156,7 @@ export const tokenMap: Partial<Record<TokenType, {
         regex: /^QUACK(?=[^a-zA-Z0-9]|$)/,
         js: 'const',
     } ,
-    'ASSIGNMENT': {
+    'ASSIGNMENT_OPERATOR': {
         regex: /^<->/,
         js: '=',
     },

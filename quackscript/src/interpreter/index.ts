@@ -1,4 +1,4 @@
-import { BinaryExpressionNode, LiteralNode, Module } from '../parser';
+import { BinaryExpressionNode, ExpressionNode, IdentifierNode, LiteralNode, Module } from '../parser/types';
 
 export default class Interpreter {
 
@@ -8,7 +8,7 @@ export default class Interpreter {
         }
     }
 
-    private dfsInOrder = (node: BinaryExpressionNode | LiteralNode<string | number>): number => {
+    private dfsInOrder = (node: BinaryExpressionNode | LiteralNode<string | number> | IdentifierNode | ExpressionNode): number => {
         if (node.type === 'NumberLiteral') {
             return (node as LiteralNode<number>).value;
         }

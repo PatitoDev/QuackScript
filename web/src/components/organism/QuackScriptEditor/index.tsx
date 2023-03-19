@@ -9,7 +9,7 @@ const defaultQuackTextValue = 'QUACK test <- \'hello world\'🦆\n\nquackprint(:
 const transpiler = new Transpiler();
 const lexer = new Lexer();
 const parser = new Parser();
-const interpeter = new Interpreter();
+const interpreter = new Interpreter();
 
 const QuackScriptEditor = () => {
     const [quackCode, setQuackCode] = useState<string>(defaultQuackTextValue);
@@ -24,14 +24,15 @@ const QuackScriptEditor = () => {
         const parsedOutcome = parser.parse(tokens);
         console.log('tree: ', parsedOutcome);
         if (parsedOutcome) {
-            js = JSON.stringify(parsedOutcome);
+            //js = JSON.stringify(parsedOutcome);
         }
-        //const result = interpeter.execute(parsedOutcome);
+        const result = interpreter.execute(parsedOutcome);
         //console.log('outcome: ', result);
 
         //js = transpiler.transpile(quackCode);
-        //js = String(result) ?? 'error';
+        js = String(result) ?? 'NULL';
     } catch (e) {
+        console.error(e);
         js = (e as Error).message;
     }
 

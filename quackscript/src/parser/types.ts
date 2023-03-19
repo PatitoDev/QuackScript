@@ -22,10 +22,6 @@ export interface Node {
     type: NodeTypes
 }
 
-export interface Module extends Node {
-    body: Array<BinaryExpressionNode>
-}
-
 export interface BinaryExpressionNode extends Node {
     left: LiteralNode<string | number> | IdentifierNode,
     right: ExpressionNode,

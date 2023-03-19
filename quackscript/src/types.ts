@@ -29,7 +29,6 @@ export type TokenType = 'ASSIGNMENT_OPERATOR' |
 'BRACKET_CLOSE' |
 'COMMA' | 
 'ASSIGNMENT_OBJECT' |
-'PRINT' |
 'IF' |
 'THEN' |
 'JS_RESERVED_WORD' |

@@ -114,10 +114,6 @@ export const tokenMap: Partial<Record<TokenType, {
     'IMPORT' : {
         regex: /^import(?=[^a-z-A-Z0-9]|$)/
     },
-    'PRINT': {
-        js: 'console.log',
-        regex: /^quackprint(?=[^a-zA-Z0-9]|$)/
-    },
     'NUMBER':  {
         regex: /^[0-9]*\.?[0-9]*/,
     },

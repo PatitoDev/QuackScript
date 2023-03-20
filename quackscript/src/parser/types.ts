@@ -15,7 +15,8 @@ export type NodeTypes = 'StringLiteral' |
     'Params' |
     'FuncCallNode' |
     'CodeBlock' |
-    'FuncDeclaration';
+    'FuncDeclaration' |
+    'ReturnStatement';
 
 export type OperatorTypes = '+' | '-' | '/' | '%' | '*';
 
@@ -61,10 +62,8 @@ export interface DeclarationNode extends Node<'Declaration'> {
 }
 
 export interface StatementNode extends Node<'Statement'> {
-    body: DeclarationNode | AssignmentNode | ExpressionNode
+    body: DeclarationNode | AssignmentNode | ExpressionNode | ReturnStatementNode
 }
-
-export type ReturnNode = Node<'Return'>
 
 export interface ModuleNode extends Node<'Module'> {
     statements: Array<StatementNode>
@@ -92,6 +91,10 @@ export interface FuncDeclarationNode extends Node<'FuncDeclaration'> {
 export interface CodeBlockNode extends Node<'CodeBlock'> {
     // extra -> return
     body: Array<StatementNode>
+}
+
+export interface ReturnStatementNode extends Node<'ReturnStatement'> {
+    value: ExpressionNode
 }
 
 // <statement> := <expression> <terminator> | <expression> <statement>

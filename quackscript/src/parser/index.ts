@@ -6,7 +6,7 @@ import {
     FuncCallNode,
     IdentifierNode, LiteralNode, ModuleNode, OperatorTypes,
     ArgsNode,
-    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode } from './types';
+    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode } from './types';
 
 
 export default class Parser {
@@ -409,7 +409,26 @@ export default class Parser {
     };
 
     /*
-        <statement> := <declaration> <terminator> | <assignment> <terminator> | <expression> <terminator>
+        <return-statement> := <return> <expression> <terminator>
+    */
+    private returnStatement = (): ReturnStatementNode | null => {
+        const token = this._cursor.readCurrentToken();
+        if (token?.type !== 'RETURN') return null;
+        
+        this._cursor.advanceCursor(1);
+        const expressionNode = this.expression();
+        if (!expressionNode) throw new Error(`Expecting expression but found ${this._cursor.readCurrentToken()?.value}`);
+        
+        const terminatorNode = this._cursor.readCurrentToken();
+        if (terminatorNode?.type !== 'TERMINATOR') throw new Error(`Expecting 🦆 but found ${this._cursor.readCurrentToken()?.value}`);
+        return {
+            type: 'ReturnStatement',
+            value: expressionNode
+        };
+    };
+
+    /*
+        <statement> := <declaration> <terminator> | <assignment> <terminator> | <expression> <terminator> | <returnStatement>
     */
     private statement = (): StatementNode | null => {
         const firstToken = this._cursor.readCurrentToken();
@@ -445,6 +464,17 @@ export default class Parser {
             }
         }
 
+
+        if (!generatedNode) {
+            const returnStatement = this.returnStatement();
+            if (returnStatement) {
+                generatedNode = {
+                    body: returnStatement,
+                    type: 'Statement'
+                };
+            }
+        }
+
         if (generatedNode) {
             const terminalNode = this.terminator();
             if (!terminalNode) {
@@ -455,7 +485,7 @@ export default class Parser {
 
         return null;
     };
-    
+
     private _cursor: Cursor = new Cursor([]);
 
     public parse = (tokens: Array<Token>) => {

@@ -15,7 +15,9 @@ const QuackScriptEditor = () => {
     const [quackCode, setQuackCode] = useState<string>(defaultQuackTextValue);
 
     const onQuackCodeChange = (value:string | undefined) => {
-        setQuackCode(value ?? '');
+        const valueWithoutSemicolons = value?.replaceAll(';', '🦆');
+        
+        setQuackCode(valueWithoutSemicolons ?? '');
     };
 
     let js = '';
@@ -47,7 +49,7 @@ const QuackScriptEditor = () => {
             <S.CodeWindowContent>
                 <CodeEditor 
                     onChange={onQuackCodeChange}
-                    value={defaultQuackTextValue} 
+                    value={quackCode} 
                     language="quackscript" />
                 <CodeEditor
                     height='20em'

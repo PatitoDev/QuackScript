@@ -1,9 +1,15 @@
-import { AssignmentNode, DeclarationNode, ExpressionNode, IdentifierNode, LiteralNode, ModuleNode, StatementNode } from '../parser/types';
-import { Memory } from './memory';
+import { AssignmentNode, CodeBlockNode, DeclarationNode, ExpressionNode, FuncCallNode, FuncDeclarationNode, IdentifierNode, LiteralNode, ModuleNode, StatementNode } from '../parser/types';
+import { Memory, MemoryObjectBase, MemoryValue } from './memory';
+
+// TODO - make a stdout to output
 
 export default class Interpreter {
 
-    private _memory = new Memory();
+    private _memory;
+
+    public constructor(){
+        this._memory = new Memory();
+    }
 
     public execute(tree: ModuleNode) {
         const stdOut:Array<string> = [];
@@ -17,70 +23,119 @@ export default class Interpreter {
         return stdOut;
     }
 
+    public executeBlock(block: CodeBlockNode) {
+        for (const statement of block.body) {
+            console.log(this.executeStatement(statement));
+        }
+    }
+
+    public executeStatements(statements: Array<StatementNode>) {
+        for (const statement of statements) {
+            console.log(this.executeStatement(statement));
+        }
+    }
+
     private executeStatement(statement: StatementNode) {
-        console.log('pre', statement);
         switch (statement.body.type) {
         case 'Declaration':
-            // save to memory
             this.executeDeclaration(statement.body as DeclarationNode);
             return;
         case 'Assignment':
-            this.executeAssignment2(statement.body as AssignmentNode);
+            this.executeAssignment(statement.body as AssignmentNode);
             return;
-        case 'StringLiteral':
-        case 'NumberLiteral':
-        case 'Identifier':
         case 'Expression':
-            // execute
             return this.executeExpressionNode(statement.body as ExpressionNode);
         }
-        throw new Error('Unexpected statement');
     }
-
-    private executeAssignment2 = (node: AssignmentNode) => {
-        console.log('asdasdasdasd');
-        const id = node.identifier.value;
-        const value = this.executeExpressionNode(node.expression as ExpressionNode);
-        this._memory.update(id, value);
-    };
 
     private executeDeclaration = (node: DeclarationNode) => {
         const typeOfAssignment = node.declaratorType;
         const id = node.assignmentNode.identifier.value;
-        const value = this.executeAssignment(node.assignmentNode);
+
+        let value: MemoryValue | null = null;
+        let valueType:MemoryObjectBase['type'] = 'func';
+
+        if (node.assignmentNode.expression.type === 'FuncDeclaration'){
+            value = node.assignmentNode.expression as FuncDeclarationNode;
+            valueType = 'func';
+        } else {
+            value = this.executeExpressionNode(node.assignmentNode.expression as ExpressionNode);
+            valueType = 'literal';
+        }
+
+        // todo - check null returns;
+        if (value === null) throw new Error('Internal Error on declaration');
+
         this._memory.set(id, {
             declarationType: typeOfAssignment,
             identifier: id,
-            type: 'literal',
+            type: valueType,
             value
         });
     };
 
     private executeAssignment = (node: AssignmentNode) => {
-        return this.executeExpressionNode(node.expression as ExpressionNode);
-
-        switch (node.type) {
+        const id = node.identifier.value;
+        let value: MemoryValue | null = null;
+        switch (node.expression.type) {
         case 'Expression':
-            return this.executeExpressionNode(node.expression as ExpressionNode);
+            value = this.executeExpressionNode(node.expression as ExpressionNode);
+            break;
         case 'FuncDeclaration':
-            throw new Error('not implemented on asignment node func');
+            value = (node.expression as FuncDeclarationNode);
+            break;
         }
-        console.log('asdasdasdas', node);
-        throw new Error('not implemented on assignment node');
+
+        // TODO - non function returning value on expression evaluates to null;
+        if (value === null) throw new Error('Internal error on assignment');
+        this._memory.update(id, value);
     };
 
-    private executeExpressionNode = (node:ExpressionNode): string | number => {
-        console.log('executed expression for node ', node);
-        switch (node.type) {
-        case 'NumberLiteral':
-            return (node as LiteralNode).value;
-        case 'StringLiteral':
-            return (node as LiteralNode).value;
-        case 'Identifier':
-            // TODO - return correct type
-            return this._memory.get((node as IdentifierNode).value).value as string | number;
+    // TODO - fix incorrect scope walking
+    private executeFunctionCall = (node: FuncCallNode) => {
+        const id = node.identifier.value;
+        const memoryValue = this._memory.get(id);
+        if (memoryValue.type !== 'func') throw new Error('tried to call a variable as a function');
+        const fn = (memoryValue.value as FuncDeclarationNode);
+        this._memory.createScope();
+        const params = fn.parameters?.params ?? [];
+        const args = node.params?.args ?? [];
+        if (params.length !== args.length) {
+            throw new Error(`Expecting ${params.length} arguments but got ${args.length} arguments`);
         }
-        throw new Error('not implemented on expression node');
+        params.forEach((param, i) => {
+            const arg = args[i];
+            if (!arg) throw new Error('internal error, index out of bounds');
+            const argResult = this.executeExpressionNode(arg);
+            if (argResult === null) throw new Error('null as parameter not allowed yet');
+            this._memory.set(param.value, {
+                declarationType: 'constant',
+                identifier: param.value,
+                type: 'func',
+                value: argResult
+            });
+        });
+
+        this.executeStatements(fn.body.body);
+        this._memory.clearScope();
+    };
+
+    private executeExpressionNode = (node:ExpressionNode): MemoryValue | null => {
+        switch (node.body.type) {
+        case 'FuncCallNode':
+            // TODO - implement parameter
+            this.executeFunctionCall(node.body as FuncCallNode);
+            return null;
+        case 'NumberLiteral':
+            return (node.body as LiteralNode).value;
+        case 'StringLiteral':
+            return (node.body as LiteralNode).value;
+        case 'Identifier':
+            return this._memory.get((node.body as IdentifierNode).value).value as MemoryValue;
+        case 'BinaryExpression':
+            // TODO implement binary expression
+            throw new Error('Not implemented binary expression');
+        }
     };
 
 /*

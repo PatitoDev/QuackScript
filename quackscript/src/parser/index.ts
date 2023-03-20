@@ -286,7 +286,7 @@ export default class Parser {
     };
 
     /*
-        <expression> :== <binary-expression> | <literal> | <func-call> | <identifier>
+        <expression> :== <binary-expression> | <literal> | <func-call> | <func-declaration> | <identifier>
     */
     private expression = (): ExpressionNode | null => {
         const parsedBinaryExpression = this.binaryExpression();
@@ -301,6 +301,14 @@ export default class Parser {
         if (funcCallNode) {
             return {
                 body: funcCallNode,
+                type: 'Expression'
+            };
+        }
+
+        const funcDeclaration = this.funcDeclaration();
+        if (funcDeclaration) {
+            return {
+                body: funcDeclaration,
                 type: 'Expression'
             };
         }
@@ -359,12 +367,7 @@ export default class Parser {
         const assignmentOperator = this.assignMentOperator();
         if (!assignmentOperator) return null;
 
-        let assignmentBody: ExpressionNode | FuncDeclarationNode | null = null;
-        assignmentBody = this.expression();
-        if (!assignmentBody) {
-            assignmentBody = this.funcDeclaration();
-        }
-
+        const assignmentBody = this.expression();
         if (assignmentBody === null) return null;
 
         return {

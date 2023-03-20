@@ -25,6 +25,7 @@ export default class Interpreter {
                 this._stdOut(output);
             }
         }
+        this._memory.printMemory();
     }
 
     public executeBlock(block: CodeBlockNode) {
@@ -65,13 +66,8 @@ export default class Interpreter {
         let value: MemoryValue | null = null;
         let valueType:MemoryObjectBase['type'] = 'func';
 
-        if (node.assignmentNode.expression.type === 'FuncDeclaration'){
-            value = node.assignmentNode.expression as FuncDeclarationNode;
-            valueType = 'func';
-        } else {
-            value = this.executeExpressionNode(node.assignmentNode.expression as ExpressionNode);
-            valueType = 'literal';
-        }
+        value = this.executeExpressionNode(node.assignmentNode.expression);
+        valueType = node.assignmentNode.expression.body.type === 'FuncDeclaration' ? 'func' : 'literal';
 
         // todo - check null returns;
         if (value === null) throw new Error('Internal Error on declaration');
@@ -91,9 +87,6 @@ export default class Interpreter {
         case 'Expression':
             value = this.executeExpressionNode(node.expression as ExpressionNode);
             break;
-        case 'FuncDeclaration':
-            value = (node.expression as FuncDeclarationNode);
-            break;
         }
 
         // TODO - non function returning value on expression evaluates to null;
@@ -101,11 +94,10 @@ export default class Interpreter {
         this._memory.update(id, value);
     };
 
-    // TODO - fix incorrect scope walking
     private executeFunctionCall = (node: FuncCallNode) => {
         const id = node.identifier.value;
         const memoryValue = this._memory.get(id);
-        if (memoryValue.type !== 'func') throw new Error('tried to call a variable as a function');
+        if (memoryValue.type !== 'func') throw new Error(`tried to call variable '${id}' as a function`);
         const fn = (memoryValue.value as FuncDeclarationNode);
         this._memory.createScope();
         const params = fn.parameters?.params ?? [];
@@ -119,9 +111,9 @@ export default class Interpreter {
             const argResult = this.executeExpressionNode(arg);
             if (argResult === null) throw new Error('null as parameter not allowed yet');
             this._memory.set(param.value, {
-                declarationType: 'constant',
+                declarationType: 'argument',
                 identifier: param.value,
-                type: 'func',
+                type: 'func', //TODO - assign correct type
                 value: argResult
             });
         });
@@ -133,7 +125,6 @@ export default class Interpreter {
     private executeExpressionNode = (node:ExpressionNode): MemoryValue | null => {
         switch (node.body.type) {
         case 'FuncCallNode':
-            // TODO - implement parameter
             this.executeFunctionCall(node.body as FuncCallNode);
             return null;
         case 'NumberLiteral':
@@ -145,6 +136,8 @@ export default class Interpreter {
         case 'BinaryExpression':
             // TODO implement binary expression
             throw new Error('Not implemented binary expression');
+        case 'FuncDeclaration':
+            return (node.body as FuncDeclarationNode);
         }
     };
 

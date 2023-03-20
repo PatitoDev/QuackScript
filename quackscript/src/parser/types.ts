@@ -43,7 +43,7 @@ export interface IdentifierNode extends Node<'Identifier'> {
 }
 
 export interface ExpressionNode extends Node<'Expression'> {
-    body: BinaryExpressionNode | LiteralNode | IdentifierNode | FuncCallNode
+    body: BinaryExpressionNode | LiteralNode | IdentifierNode | FuncCallNode | FuncDeclarationNode
 }
 
 export interface AssignmentOperatorNode extends Node<'AssignmentOperator'> {
@@ -52,7 +52,7 @@ export interface AssignmentOperatorNode extends Node<'AssignmentOperator'> {
 
 export interface AssignmentNode extends Node<'Assignment'> {
     identifier: IdentifierNode,
-    expression: ExpressionNode | FuncDeclarationNode
+    expression: ExpressionNode
 }
 
 export interface DeclarationNode extends Node<'Declaration'> {

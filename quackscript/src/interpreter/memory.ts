@@ -13,7 +13,7 @@ export interface MemoryFunc extends MemoryObjectBase {
 export interface MemoryObjectBase {
     type: 'literal' | 'func' | 'internalFunc'
     identifier: string,
-    declarationType: 'constant' | 'variable'
+    declarationType: 'constant' | 'variable' | 'argument'
     value: MemoryValue,
 }
 
@@ -38,23 +38,18 @@ export class Memory {
 
     public clearScope() {
         let scope: Scope | null = this._memory;
-        do {
-            if (scope.subScope === null){
-                scope = { subScope: null, data: {} };
-            }
-            scope = scope.subScope;
-        } while (scope !== null);
-    }
 
-    private getActiveScope(){
-        let scope: Scope | null = this._memory;
+        if (scope.subScope === null) {
+            this.clearMemory();
+            return;
+        }
+
         do {
-            if (scope.subScope === null){
-                return scope;
+            if (scope.subScope?.subScope === null) {
+                scope.subScope = null;
             }
             scope = scope.subScope;
         } while (scope !== null);
-        return scope;
     }
 
     public delete(identifier: string) {
@@ -68,11 +63,13 @@ export class Memory {
      * gets a value from memory
      * @throws error when variable not in memory
      */
-    // TODO - climb up the scope until it finds an identifier
     public get(identifier: string) {
-        const scope = this.getActiveScope();
-        const value = scope.data[identifier];
-        if (value) return value;
+        const allScopes = this.getAllScopesInOrder().reverse();
+        for (const scope of allScopes) {
+            const value = scope.data[identifier];
+            if (value) return value;
+        }
+        console.log(this._memory);
         throw new Error(`Variable '${identifier}' not in memory`);
     }
 
@@ -94,9 +91,35 @@ export class Memory {
 
         const memoryItem = scope.data[identifier];
         if (!memoryItem) throw new Error(`variable '${identifier}' does not exists`);
-        if (memoryItem.declarationType === 'constant') throw new Error(`tried to update constant ${identifier}`);
+        if (memoryItem.declarationType === 'constant') throw new Error(`Tried to update constant '${identifier}'`);
+        if (memoryItem.declarationType === 'argument') throw new Error(`Tried to update argument '${identifier}'`);
 
         memoryItem.value = value;
+    }
+
+    private getAllScopesInOrder() {
+        const allScopes:Array<Scope> = [];
+        let currentScope:Scope | null = this._memory;
+        while (currentScope !== null) {
+            allScopes.push(currentScope);
+            currentScope = currentScope.subScope;
+        }
+        return allScopes;
+    }
+
+    private getActiveScope(){
+        let scope: Scope | null = this._memory;
+        do {
+            if (scope.subScope === null){
+                return scope;
+            }
+            scope = scope.subScope;
+        } while (scope !== null);
+        return scope;
+    }
+
+    public printMemory() {
+        console.log(this._memory);
     }
 }
 

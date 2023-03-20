@@ -1,18 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CodeEditor from '../../molecules/CodeEditor';
 import * as S from './style';
 // TODO - import npm package
-import { Interpreter, Lexer, Parser, Transpiler } from '../../../../../quackscript/src';
+import { Interpreter, Lexer, Parser } from '../../../../../quackscript/src';
 
 const defaultQuackTextValue = 'QUACK test <- \'hello world\'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) :> {:\n\tquackprint(:test:)🦆\n:}🦆';
 
-const transpiler = new Transpiler();
 const lexer = new Lexer();
 const parser = new Parser();
-const interpreter = new Interpreter();
 
 const QuackScriptEditor = () => {
     const [quackCode, setQuackCode] = useState<string>(defaultQuackTextValue);
+    const [codeOutcome, setCodeOutcome] = useState<string>('');
+    const [interpreter, setInterpreter] = useState(new Interpreter());
 
     const onQuackCodeChange = (value:string | undefined) => {
         const valueWithoutSemicolons = value?.replaceAll(';', '🦆');
@@ -20,23 +20,26 @@ const QuackScriptEditor = () => {
         setQuackCode(valueWithoutSemicolons ?? '');
     };
 
-    let js = '';
-    try {
-        const tokens = lexer.convertToTokens(quackCode);
-        const parsedOutcome = parser.parse(tokens);
-        console.log('tree: ', parsedOutcome);
-        if (parsedOutcome) {
-            //js = JSON.stringify(parsedOutcome);
-        }
-        const result = interpreter.execute(parsedOutcome);
-        //console.log('outcome: ', result);
+    useEffect(() => {
+        setInterpreter(new Interpreter((value) => {
+            setCodeOutcome((pre) => (
+                pre.length ?  pre + '\n' + value : value.toString()
+            ));
+        }));
+    }, []);
 
-        //js = transpiler.transpile(quackCode);
-        js = String(result) ?? 'NULL';
-    } catch (e) {
-        console.error(e);
-        js = (e as Error).message;
-    }
+    useEffect(() => {
+        try {
+            setCodeOutcome('');
+            const tokens = lexer.convertToTokens(quackCode);
+            const parsedOutcome = parser.parse(tokens);
+            console.log('tree: ', parsedOutcome);
+            interpreter.execute(parsedOutcome);
+        } catch (e) {
+            console.error(e);
+            setCodeOutcome((e as Error).message);
+        }
+    }, [quackCode]);
 
     return (
         <S.Container>
@@ -54,7 +57,7 @@ const QuackScriptEditor = () => {
                 <CodeEditor
                     height='20em'
                     language='json'
-                    value={js}
+                    value={codeOutcome}
                 />
             </S.CodeWindowContent>
         </S.Container>

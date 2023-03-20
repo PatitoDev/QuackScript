@@ -4,7 +4,8 @@ import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser } from '../../../../../quackscript/src';
 
-const defaultQuackTextValue = 'QUACK test <- \'hello world\'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) :> {:\n\tquackprint(:test:)🦆\n:}🦆';
+// eslint-disable-next-line quotes
+const defaultQuackTextValue = "QUACK quackprint <- (:value:) :> {:value🦆:}🦆\n QUACK test <- 'hello world'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) :> {:\n\tquackprint(:b:)🦆\n:}🦆\n\na(:'this is quackscript':)🦆\na(:'in action':)🦆";
 
 const lexer = new Lexer();
 const parser = new Parser();
@@ -39,7 +40,7 @@ const QuackScriptEditor = () => {
             console.error(e);
             setCodeOutcome((e as Error).message);
         }
-    }, [quackCode]);
+    }, [quackCode, interpreter]);
 
     return (
         <S.Container>

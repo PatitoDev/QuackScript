@@ -6,32 +6,42 @@ import { Memory, MemoryObjectBase, MemoryValue } from './memory';
 export default class Interpreter {
 
     private _memory;
+    private _stdOut: (outcome: MemoryValue) => void;
 
-    public constructor(){
+    public constructor(stdout?: (outcome: MemoryValue) => void){
         this._memory = new Memory();
+        if (stdout) {
+            this._stdOut = stdout;
+        } else {
+            this._stdOut = console.log;
+        }
     }
 
     public execute(tree: ModuleNode) {
-        const stdOut:Array<string> = [];
         this._memory.clearMemory();
         for (const statement of tree.statements){
             const output = this.executeStatement(statement);
             if (output){
-                stdOut.push(output as string);
+                this._stdOut(output);
             }
         }
-        return stdOut;
     }
 
     public executeBlock(block: CodeBlockNode) {
         for (const statement of block.body) {
-            console.log(this.executeStatement(statement));
+            const outcome = this.executeStatement(statement);
+            if (outcome) {
+                this._stdOut(outcome);
+            }
         }
     }
 
     public executeStatements(statements: Array<StatementNode>) {
         for (const statement of statements) {
-            console.log(this.executeStatement(statement));
+            const outcome = this.executeStatement(statement);
+            if (outcome) {
+                this._stdOut(outcome);
+            }
         }
     }
 

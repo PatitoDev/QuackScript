@@ -1,12 +1,12 @@
 import { Token } from '../lexer';
-import { TokenCursor } from './tokenCursor';
+import { Cursor } from './tokenCursor';
 import { 
     AssignmentNode, AssignmentOperatorNode, BinaryExpressionNode, 
     DeclarationNode, ExpressionNode,
     FuncCallNode,
     IdentifierNode, LiteralNode, ModuleNode, OperatorTypes,
     ArgsNode,
-    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode } from './types';
+    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode } from './types';
 
 
 export default class Parser {
@@ -31,10 +31,10 @@ export default class Parser {
         <terminator> := 🦆
     */
     private terminator = (): TerminatorNode | null => {
-        const token = this.tokenCursor.readCurrentToken();
+        const token = this._cursor.readCurrentToken();
 
         if (token && token.type === 'TERMINATOR') {
-            this.tokenCursor.advanceCursor(1);
+            this._cursor.advanceCursor(1);
             const result: TerminatorNode = {
                 type: 'Terminator',
                 value: '🦆',
@@ -48,11 +48,11 @@ export default class Parser {
         <literal> := <number> | <string>;
     */
     private literal = () => {
-        const token = this.tokenCursor.readCurrentToken();
+        const token = this._cursor.readCurrentToken();
         if (!token) return null;
 
         if (token.type === 'NUMBER'){
-            this.tokenCursor.advanceCursor(1);
+            this._cursor.advanceCursor(1);
             return {
                 raw: token.value,
                 type: 'NumberLiteral',
@@ -61,7 +61,7 @@ export default class Parser {
         }
     
         if (token.type === 'TEXT'){
-            this.tokenCursor.advanceCursor(1);
+            this._cursor.advanceCursor(1);
             return {
                 raw: token.value,
                 type: 'StringLiteral',
@@ -76,14 +76,14 @@ export default class Parser {
         <identifier> := string
     */
     private identifier = () => {
-        const token = this.tokenCursor.readCurrentToken(); 
+        const token = this._cursor.readCurrentToken(); 
 
         if (!token || token.type !== 'IDENTIFIER') return null;
         const node:IdentifierNode = {
             type: 'Identifier',
             value: token.value
         };
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
         return node;
     };
 
@@ -91,11 +91,11 @@ export default class Parser {
         <operator> := + | - | * | %
     */
     private operator = () => {
-        const token = this.tokenCursor.readCurrentToken();
+        const token = this._cursor.readCurrentToken();
         if (!token) return null;
         
         if (this.isOperator(token)){ 
-            this.tokenCursor.advanceCursor(1);
+            this._cursor.advanceCursor(1);
             return token.value as OperatorTypes;
         }
 
@@ -106,7 +106,7 @@ export default class Parser {
         <params> := <expression> <comma> <params> | <expression>
     */
     private args = () => {
-        const firstNode = this.tokenCursor.readCurrentToken();
+        const firstNode = this._cursor.readCurrentToken();
         if (!firstNode) return null;
 
         const expressionNode = this.expression();
@@ -114,16 +114,15 @@ export default class Parser {
 
         const paramNode:ArgsNode = {
             type: 'Args',
-            left: expressionNode,
-            right: null
+            args: [expressionNode],
         };
 
-        const commaToken = this.tokenCursor.readCurrentToken();
+        const commaToken = this._cursor.readCurrentToken();
         if (commaToken?.type === 'COMMA') {
-            this.tokenCursor.advanceCursor(1);
+            this._cursor.advanceCursor(1);
             const rightParam = this.args();
             if (!rightParam) throw new Error('Expecting parameter');
-            paramNode.right = rightParam;
+            paramNode.args = [...paramNode.args, ...rightParam.args];
         }
 
         return paramNode;
@@ -133,9 +132,9 @@ export default class Parser {
         <code-block> := {: <statement> :}
     */
     private codeBlock = (): CodeBlockNode | null => {
-        const leftBracket = this.tokenCursor.readCurrentToken();
+        const leftBracket = this._cursor.readCurrentToken();
         if (leftBracket?.type !== 'CURLY_BRACKET_OPEN') return null;
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
     
         const body: Array<StatementNode> = [];
         let nextStatement: StatementNode | null = null;
@@ -146,11 +145,11 @@ export default class Parser {
             }
         } while (nextStatement !== null);
     
-        const rightBracket = this.tokenCursor.readCurrentToken();
+        const rightBracket = this._cursor.readCurrentToken();
         if (rightBracket?.type !== 'CURLY_BRACKET_CLOSE') {
             throw new Error(`Expected :} but found ${rightBracket?.value}`);
         }
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
     
         return {
             body,
@@ -159,34 +158,64 @@ export default class Parser {
     };
 
     /*
-        <func-declaration> := (:<args>:) :> <code-block>
+        <params> := <identifier> <comma> <params> | <identifier>
+    */
+    private params = ():ParamsNode | null => {
+        const id = this._cursor.readCurrentToken();
+        if (id?.type !== 'IDENTIFIER') return null;
+
+        const identifierNode:IdentifierNode = {
+            type: 'Identifier',
+            value: id.value,
+        };
+
+        const paramNode:ParamsNode = {
+            params: [identifierNode],
+            type: 'Params'
+        };
+        this._cursor.advanceCursor(1);
+
+        const comma = this._cursor.readCurrentToken();
+        if (comma?.type === 'COMMA'){
+            this._cursor.advanceCursor(1);
+            const nextParam = this.params();
+            if (nextParam) {
+                paramNode.params = [...paramNode.params, ...nextParam.params];
+            }
+        }
+
+        return paramNode;
+    };
+
+    /*
+        <func-declaration> := (:<params>:) :> <code-block>
     */
     private funcDeclaration = (): FuncDeclarationNode | null => {
-        const currentToken = this.tokenCursor.readCurrentToken();
+        const currentToken = this._cursor.readCurrentToken();
         if (currentToken?.type !== 'BRACKET_OPEN') return null;
     
-        this.tokenCursor.advanceCursor(1);
-        const args = this.args();
+        this._cursor.advanceCursor(1);
+        const params = this.params();
         
-        const rightBracket = this.tokenCursor.readCurrentToken();
+        const rightBracket = this._cursor.readCurrentToken();
         if (rightBracket?.type !== 'BRACKET_CLOSE') {
             throw new Error(`Expecting :) but found ${rightBracket?.value}`);
         }
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
 
-        const arrowFunctionOperator = this.tokenCursor.readCurrentToken();
+        const arrowFunctionOperator = this._cursor.readCurrentToken();
         if (arrowFunctionOperator?.type !== 'ARROW_FUNCTION') {
             throw new Error(`Expecting :> but found ${arrowFunctionOperator?.value}`);
         }
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
 
         const codeBlock = this.codeBlock();
         if (!codeBlock) {
-            throw new Error(`Expected code block but found ${this.tokenCursor.readCurrentToken()?.value}`);
+            throw new Error(`Expected code block but found ${this._cursor.readCurrentToken()?.value}`);
         }
 
         return {
-            args,
+            parameters: params,
             body: codeBlock,
             type: 'FuncDeclaration'
         };
@@ -196,9 +225,9 @@ export default class Parser {
         <func> := <identifier> <bracket-open> <params> <bracket-close> 
     */
     private funcCall = (): FuncCallNode | null => {
-        const firstNode = this.tokenCursor.readCurrentToken();
-        const secondNode = this.tokenCursor.lookAhead(1);
-        const thirdNode = this.tokenCursor.lookAhead(2);
+        const firstNode = this._cursor.readCurrentToken();
+        const secondNode = this._cursor.lookAhead(1);
+        const thirdNode = this._cursor.lookAhead(2);
         if (
             !thirdNode ||
             !firstNode ||
@@ -210,14 +239,14 @@ export default class Parser {
         const identifierNode = this.identifier();
         if (!identifierNode) return null;
 
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
         const params = this.args();
     
-        const nextToken = this.tokenCursor.readCurrentToken();
+        const nextToken = this._cursor.readCurrentToken();
         if (nextToken?.type !== 'BRACKET_CLOSE') {
             throw new Error(`Expected :) but found ${nextToken?.value}`);
         }
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
 
         return {
             identifier: identifierNode,
@@ -230,9 +259,9 @@ export default class Parser {
         <binary-expression> :== <terminal-expression> <operator> <expression>
     */
     private binaryExpression = (): BinaryExpressionNode | null => {
-        const firstToken = this.tokenCursor.readCurrentToken();
-        const secondToken = this.tokenCursor.lookAhead(1);
-        const thirdToken = this.tokenCursor.lookAhead(2);
+        const firstToken = this._cursor.readCurrentToken();
+        const secondToken = this._cursor.lookAhead(1);
+        const thirdToken = this._cursor.lookAhead(2);
         if (!firstToken || !secondToken || !thirdToken) return null;
 
         if (!this.isOperator(secondToken)) return null;
@@ -260,25 +289,36 @@ export default class Parser {
         <expression> :== <binary-expression> | <literal> | <func-call> | <identifier>
     */
     private expression = (): ExpressionNode | null => {
-        console.log('expression:', this.tokenCursor.readCurrentToken());
         const parsedBinaryExpression = this.binaryExpression();
         if (parsedBinaryExpression) {
-            return parsedBinaryExpression;
+            return {
+                type: 'Expression',
+                body: parsedBinaryExpression
+            };
         }
 
         const funcCallNode = this.funcCall();
         if (funcCallNode) {
-            return funcCallNode;
+            return {
+                body: funcCallNode,
+                type: 'Expression'
+            };
         }
 
         const parsedIdentifier = this.identifier();
         if (parsedIdentifier) {
-            return parsedIdentifier;
+            return {
+                body: parsedIdentifier,
+                type: 'Expression'
+            };
         }
 
         const parsedLiteral = this.literal();
         if (parsedLiteral) {
-            return parsedLiteral;
+            return {
+                body: parsedLiteral,
+                type: 'Expression'
+            };
         }
 
         return null;
@@ -288,9 +328,9 @@ export default class Parser {
         <assignment-operator> := <-
     */
     private assignMentOperator = (): AssignmentOperatorNode | null => {
-        const token = this.tokenCursor.readCurrentToken();
+        const token = this._cursor.readCurrentToken();
         if (!token || token.type !== 'ASSIGNMENT_OPERATOR') return null;
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
         const node:AssignmentOperatorNode = {
             type: 'AssignmentOperator',
             value: token.value
@@ -305,15 +345,15 @@ export default class Parser {
         <assignment> := <identifier> <assignment-operator> <assignment-body>
     */
     private assignment = (): AssignmentNode | null => {
-        const currentToken = this.tokenCursor.readCurrentToken();
-        const secondNode = this.tokenCursor.lookAhead(1);
+        const currentToken = this._cursor.readCurrentToken();
+        const secondNode = this._cursor.lookAhead(1);
         if (!currentToken || !secondNode) return null;
         if (secondNode.type !== 'ASSIGNMENT_OPERATOR') return null;
 
         const identifierNode = this.identifier();
         if (!identifierNode) return null;
 
-        const thirdNode = this.tokenCursor.lookAhead(2);
+        const thirdNode = this._cursor.lookAhead(2);
         if (!secondNode || !thirdNode) return null;
 
         const assignmentOperator = this.assignMentOperator();
@@ -339,7 +379,7 @@ export default class Parser {
         <declaration> := <declaration-operator> <assignment>
     */
     private declaration = (): DeclarationNode | null => {
-        const token = this.tokenCursor.readCurrentToken();
+        const token = this._cursor.readCurrentToken();
         if (
             !token ||
             (token.type !== 'ASSIGNMENT_LET' &&
@@ -351,9 +391,9 @@ export default class Parser {
             assignmentType = 'constant';
         }
 
-        const nextNode = this.tokenCursor.lookAhead(1);
+        const nextNode = this._cursor.lookAhead(1);
         if (!nextNode) throw new Error('expected assignment');
-        this.tokenCursor.advanceCursor(1);
+        this._cursor.advanceCursor(1);
 
         const assignmentNode = this.assignment();
         if (!assignmentNode) throw new Error(`expected assignment found ${nextNode.value}`);
@@ -369,13 +409,12 @@ export default class Parser {
         <statement> := <declaration> <terminator> | <assignment> <terminator> | <expression> <terminator>
     */
     private statement = (): StatementNode | null => {
-        const firstToken = this.tokenCursor.readCurrentToken();
+        const firstToken = this._cursor.readCurrentToken();
         if (!firstToken) return null;
 
         const declaration = this.declaration();
         let generatedNode:StatementNode | null = null;
 
-        console.log('statement', this.tokenCursor.readCurrentToken());
         if (declaration) {
             generatedNode = {
                 body: declaration,
@@ -383,24 +422,22 @@ export default class Parser {
             };
         }
 
-        console.log('assignment', this.tokenCursor.readCurrentToken());
         if (!generatedNode) {
             const assignment = this.assignment();
             if (assignment) {
                 generatedNode = {
                     body: assignment,
-                    type: 'Assignment'
+                    type: 'Statement'
                 };
             }
         }
 
-        console.log('expression', this.tokenCursor.readCurrentToken());
         if (!generatedNode) {
             const expression = this.expression();
             if (expression) {
                 generatedNode = {
                     body: expression,
-                    type: 'Expression'
+                    type: 'Statement'
                 };
             }
         }
@@ -408,7 +445,7 @@ export default class Parser {
         if (generatedNode) {
             const terminalNode = this.terminator();
             if (!terminalNode) {
-                throw new Error(`expected 🦆 but found ${this.tokenCursor.readCurrentToken()?.value ?? 'EOF'}`);
+                throw new Error(`expected 🦆 but found ${this._cursor.readCurrentToken()?.value ?? 'EOF'}`);
             }
             return generatedNode;
         }
@@ -416,12 +453,12 @@ export default class Parser {
         return null;
     };
     
-    private tokenCursor: TokenCursor = new TokenCursor([]);
+    private _cursor: Cursor = new Cursor([]);
 
     public parse = (tokens: Array<Token>) => {
         const excludedWhiteSpace = tokens.filter((t) => t.type !== 'WHITESPACE' && t.type !== 'NEW_LINE');
         console.log(excludedWhiteSpace);
-        this.tokenCursor = new TokenCursor(excludedWhiteSpace);
+        this._cursor = new Cursor(excludedWhiteSpace);
 
         const module:ModuleNode = {
             type: 'Module',
@@ -430,8 +467,8 @@ export default class Parser {
 
         let hasError = false;
         do  {
-            const nextToken = this.tokenCursor.readCurrentToken();
-            if (!nextToken) throw new Error(`Something has gone wrong handling the cursor at ${this.tokenCursor.getCursor()}`);
+            const nextToken = this._cursor.readCurrentToken();
+            if (!nextToken) throw new Error(`Something has gone wrong handling the cursor at ${this._cursor.getPosition()}`);
             const nextStatement = this.statement();
             if (nextStatement) {
                 module.statements.push(nextStatement);
@@ -439,10 +476,10 @@ export default class Parser {
             if (!nextStatement) {
                 hasError = true;
             }
-        } while (!this.tokenCursor.hasReachedEnd() && !hasError);
+        } while (!this._cursor.hasReachedEnd() && !hasError);
 
         if (hasError) {
-            throw new Error(`expected statement found ${this.tokenCursor.readCurrentToken()?.value}`);
+            throw new Error(`expected statement found ${this._cursor.readCurrentToken()?.value}`);
         }
 
         return module;

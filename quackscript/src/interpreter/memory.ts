@@ -1,7 +1,5 @@
 import { FuncDeclarationNode } from '../parser/types';
 
-const GLOBAL_SCOPE_ID = 'GLOBAL';
-
 export interface MemoryLiteral extends MemoryObjectBase {
     type: 'literal',
     value: string | number,
@@ -13,76 +11,92 @@ export interface MemoryFunc extends MemoryObjectBase {
 }
 
 export interface MemoryObjectBase {
-    type: 'literal' | 'func'
+    type: 'literal' | 'func' | 'internalFunc'
     identifier: string,
     declarationType: 'constant' | 'variable'
-    value: string | number | FuncDeclarationNode,
+    value: MemoryValue,
 }
 
-export type Scope = Record<string, MemoryObjectBase>;
-export type InternalMemoryRepresentation = Record<string, Scope>;
+export type MemoryValue = string | number | FuncDeclarationNode;
+
+export type Scope = {
+    subScope: Scope | null,
+    data: Record<string, MemoryObjectBase>
+};
 
 export class Memory {
 
+    private _memory: Scope;
+
     constructor (){
-        this.createScope(GLOBAL_SCOPE_ID);
+        this._memory = { subScope: null, data: {} };
     }
     
-
-    private _memory : InternalMemoryRepresentation = {};
-
     public clearMemory() {
-        this._memory = {};
-        this.createScope(GLOBAL_SCOPE_ID);
+        this._memory = { subScope: null, data: {} };
     }
 
-    public clearScope(scopeId: string) {
-        this._memory[scopeId] = {};
+    public clearScope() {
+        let scope: Scope | null = this._memory;
+        do {
+            if (scope.subScope === null){
+                scope = { subScope: null, data: {} };
+            }
+            scope = scope.subScope;
+        } while (scope !== null);
     }
 
-    public delete(identifier: string, scopeId: string = GLOBAL_SCOPE_ID) {
-        const scope = this._memory[scopeId];
+    private getActiveScope(){
+        let scope: Scope | null = this._memory;
+        do {
+            if (scope.subScope === null){
+                return scope;
+            }
+            scope = scope.subScope;
+        } while (scope !== null);
+        return scope;
+    }
+
+    public delete(identifier: string) {
+        const scope = this.getActiveScope();
         if (scope) {
-            delete scope[identifier];
+            delete scope.data[identifier];
         }
     }
 
-    public get(identifier: string, scopeId: string = GLOBAL_SCOPE_ID) {
-        const scope = this._memory[scopeId];
-        if (scope) {
-            const value = scope[identifier];
-            if (value) return value;
-        }
-        throw new Error('Variable not in memory');
+    /**
+     * gets a value from memory
+     * @throws error when variable not in memory
+     */
+    // TODO - climb up the scope until it finds an identifier
+    public get(identifier: string) {
+        const scope = this.getActiveScope();
+        const value = scope.data[identifier];
+        if (value) return value;
+        throw new Error(`Variable '${identifier}' not in memory`);
     }
 
-    public createScope(scopeId: string) {
-        if (this._memory[scopeId]) throw new Error(`${scopeId} already exists`);
-        this._memory[scopeId] = {};
-        console.log('memory:', this._memory);
+    public createScope() {
+        const scope = this.getActiveScope();
+        scope.subScope = { data: {}, subScope: null};
     }
 
-    public set(identifier: string, value: MemoryObjectBase, scopeId: string = GLOBAL_SCOPE_ID) {
-        console.log(`SETTING VALUE TO  ${identifier}, value: ${value.value}`);
-        const scope = this._memory[scopeId];
-        if (!scope) throw new Error(`scope ${scopeId} does not exists`);
+    public set(identifier: string, value: MemoryObjectBase) {
+        const scope = this.getActiveScope();
 
-        const memorySlot = scope[identifier];
-        if (memorySlot) throw new Error(`variable ${identifier} already exists`);
-        scope[identifier] = value;
-        console.log('memory:', this._memory);
+        const memorySlot = scope.data[identifier];
+        if (memorySlot) throw new Error(`Variable '${identifier}' already exists`);
+        scope.data[identifier] = value;
     }
 
-    public update(identifier: string, value: MemoryObjectBase['value'], scopeId: string = GLOBAL_SCOPE_ID) {
-        const scope = this._memory[scopeId];
-        if (!scope) throw new Error(`scope ${scopeId} does not exist`);
+    public update(identifier: string, value: MemoryObjectBase['value']) {
+        const scope = this.getActiveScope();
 
-        const memoryItem = scope[identifier];
-        if (!memoryItem) throw new Error(`variable ${identifier} does not exists`);
+        const memoryItem = scope.data[identifier];
+        if (!memoryItem) throw new Error(`variable '${identifier}' does not exists`);
         if (memoryItem.declarationType === 'constant') throw new Error(`tried to update constant ${identifier}`);
 
         memoryItem.value = value;
-        console.log(this._memory);
     }
 }
 

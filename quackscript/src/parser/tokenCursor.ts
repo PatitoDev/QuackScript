@@ -1,37 +1,37 @@
 import { Token } from '../lexer';
 
-export class TokenCursor {
-    private cursor: number;
-    private tokens:Array<Token>;
+export class Cursor {
+    private _position: number;
+    private _tokens:Array<Token>;
 
     constructor (tokens: Array<Token>) {
-        this.tokens = tokens;
-        this.cursor = 0;
+        this._tokens = tokens;
+        this._position = 0;
     }
 
     public hasReachedEnd = () => (
-        this.cursor >= this.tokens.length - 1
+        this._position >= this._tokens.length - 1
     );
 
-    public getCursor = () => {
-        return this.cursor;
+    public getPosition = () => {
+        return this._position;
     };
 
     public readCurrentToken = () => {
-        return this.tokens[this.cursor];
+        return this._tokens[this._position];
     };
 
     public readCurrentTokenAndAdvanceByOne = () => {
-        const currentToken = this.tokens[this.cursor];
+        const currentToken = this._tokens[this._position];
         this.advanceCursor(1);
         return currentToken;
     };
 
     public advanceCursor = (amount: number) => {
-        this.cursor += amount;
+        this._position += amount;
     };
 
     public lookAhead = (amount: number) => {
-        return this.tokens[this.cursor + amount];
+        return this._tokens[this._position + amount];
     };
 }

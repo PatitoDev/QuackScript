@@ -1,6 +1,7 @@
 import Button from '../../../atoms/Button';
 import Typography from '../../../atoms/Typography';
 import * as S from './style';
+import Duck from '../../../atoms/Duck';
 
 const MainHome = () => (
     <S.MainContainer>
@@ -19,7 +20,7 @@ const MainHome = () => (
             <Button variant="outline" >Get Started</Button>
         </S.Container>
         <S.Image>
-            <img alt='logo' src="./img/DuckAvatarMd.png" />
+            <Duck />
         </S.Image> 
     </S.MainContainer>
 );

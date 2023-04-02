@@ -1,0 +1,15 @@
+{
+  "name": "quackscript-mono",
+  "version": "1.0.0",
+  "repository": "https://github.com/Niv3K-El-Pato/QuackScript.git",
+  "author": "Niv3k_El_Pato <niv3k.business@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "Apps/*",
+    "Lib/*"
+  ],
+  "scripts": {
+    "build": "yarn --cwd ./Apps/web build --outDir=../../out/web & yarn --cwd ./Apps/docs build --out-dir ../../out/docs"
+  }
+}

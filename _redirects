@@ -1,2 +1,2 @@
-/docs/*    /out/docs:splat       200
-/*         /out/web:splat        200
+/docs/*    /out/docs/:splat       200
+/*         /out/web/:splat        200

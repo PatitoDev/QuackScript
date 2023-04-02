@@ -9,10 +9,6 @@ const Home = () => (
     <>
         <MainHome />
         <CodeSection />
-        <StatsSection />
-        <GameDemoSection />
-        <PlatformSection />
-        <CompaniesSection />
     </>
 );
 

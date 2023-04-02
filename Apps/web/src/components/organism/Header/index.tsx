@@ -1,4 +1,4 @@
-import { BsDiscord, AiFillGithub } from 'react-icons/all';
+import { AiFillGithub } from 'react-icons/all';
 import Link from '../../atoms/Link';
 import * as S from './style';
 
@@ -9,7 +9,7 @@ const Header = () => (
             <Link selected>
                 Home
             </Link>
-            <Link href="http://localhost:3000">
+            <Link href="/docs">
                 Docs
             </Link>
 

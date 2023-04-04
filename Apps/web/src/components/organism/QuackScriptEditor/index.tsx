@@ -4,8 +4,19 @@ import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser } from 'quackscript';
 
-// eslint-disable-next-line quotes
-const defaultQuackTextValue = "QUACK quackprint <- (:value:) :> {:value🦆:}🦆\n QUACK test <- 'hello world'🦆\n\nquackprint(:test:)🦆\n\nquack a <- (:b:) :> {:\n\tquackprint(:b:)🦆\n:}🦆\n\na(:'this is quackscript':)🦆\na(:'in action':)🦆";
+const defaultQuackTextValue = `QUACK exampleFunction <- (:value:) :> {: return value🦆:}🦆
+QUACK test <- 'hello world'🦆
+
+exampleFunction(:'this is quackscript':)🦆
+exampleFunction(:'in action':)🦆
+
+QUACK add <- (:first, second:) :> {:
+    return first + second🦆
+:}🦆
+
+add(:5, 8:)🦆
+quackprint(:'hello world':)🦆
+`;
 
 const lexer = new Lexer();
 const parser = new Parser();
@@ -24,7 +35,7 @@ const QuackScriptEditor = () => {
     useEffect(() => {
         setInterpreter(new Interpreter((value) => {
             setCodeOutcome((pre) => (
-                pre.length ?  pre + '\n' + value : value.toString()
+                pre.length ?  pre + '\n' + `${value.value}` : `${value.value}`
             ));
         }));
     }, []);

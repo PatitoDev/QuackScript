@@ -1,4 +1,5 @@
-import { FuncDeclarationNode } from '../parser/types';
+import { FuncDeclarationNode, InternalFuncDeclarationNode } from '../parser/types';
+import standardLibrary from '../stdLibrary/standardLibrary';
 
 export interface MemoryLiteral extends MemoryObjectBase {
     type: 'literal',
@@ -10,14 +11,15 @@ export interface MemoryFunc extends MemoryObjectBase {
     value: FuncDeclarationNode,
 }
 
-export interface MemoryObjectBase {
-    type: 'literal' | 'func' | 'internalFunc'
+export interface MemoryObjectBase extends MemoryValue {
     identifier: string,
-    declarationType: 'constant' | 'variable' | 'argument'
-    value: MemoryValue,
+    declarationType: 'constant' | 'variable' | 'argument' | 'internal'
 }
 
-export type MemoryValue = string | number | FuncDeclarationNode;
+export type MemoryValue = {
+    type: 'literal' | 'func' | 'internalFunc'
+    value: string | number | FuncDeclarationNode | InternalFuncDeclarationNode,
+}
 
 export type Scope = {
     subScope: Scope | null,
@@ -29,11 +31,15 @@ export class Memory {
     private _memory: Scope;
 
     constructor (){
-        this._memory = { subScope: null, data: {} };
+        this._memory = { subScope: null, data: {
+            ...standardLibrary
+        } };
     }
-    
+
     public clearMemory() {
-        this._memory = { subScope: null, data: {} };
+        this._memory = { subScope: null, data: {
+            ...standardLibrary
+        } };
     }
 
     public clearScope() {
@@ -63,7 +69,7 @@ export class Memory {
      * gets a value from memory
      * @throws error when variable not in memory
      */
-    public get(identifier: string) {
+    public get(identifier: string): MemoryObjectBase {
         const allScopes = this.getAllScopesInOrder().reverse();
         for (const scope of allScopes) {
             const value = scope.data[identifier];
@@ -86,15 +92,16 @@ export class Memory {
         scope.data[identifier] = value;
     }
 
-    public update(identifier: string, value: MemoryObjectBase['value']) {
+    public update(identifier: string, value: MemoryValue) {
         const scope = this.getActiveScope();
 
         const memoryItem = scope.data[identifier];
         if (!memoryItem) throw new Error(`variable '${identifier}' does not exists`);
         if (memoryItem.declarationType === 'constant') throw new Error(`Tried to update constant '${identifier}'`);
         if (memoryItem.declarationType === 'argument') throw new Error(`Tried to update argument '${identifier}'`);
+        if (memoryItem.type !== value.type) throw new Error(`Tried to assign ${value.type} to a ${memoryItem.type}`);
 
-        memoryItem.value = value;
+        memoryItem.value = value.value;
     }
 
     private getAllScopesInOrder() {

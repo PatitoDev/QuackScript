@@ -16,6 +16,7 @@ export type NodeTypes = 'StringLiteral' |
     'FuncCallNode' |
     'CodeBlock' |
     'FuncDeclaration' |
+    'InternalFuncDeclaration' |
     'ReturnStatement';
 
 export type OperatorTypes = '+' | '-' | '/' | '%' | '*';
@@ -83,9 +84,18 @@ export interface FuncCallNode extends Node<'FuncCallNode'> {
     identifier: IdentifierNode,
 }
 
-export interface FuncDeclarationNode extends Node<'FuncDeclaration'> {
+export interface GenericFuncDeclarationNode extends Node<'FuncDeclaration' | 'InternalFuncDeclaration'> {
     parameters: ParamsNode | null,
+}
+
+export interface FuncDeclarationNode extends GenericFuncDeclarationNode {
+    type: 'FuncDeclaration',
     body: CodeBlockNode
+}
+
+export interface InternalFuncDeclarationNode extends GenericFuncDeclarationNode {
+    type: 'InternalFuncDeclaration',
+    identifier: string,
 }
 
 export interface CodeBlockNode extends Node<'CodeBlock'> {

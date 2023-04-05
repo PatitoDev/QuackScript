@@ -56,16 +56,16 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/QuackScriptLogoHorizontal.png',
       navbar: {
-        title: 'QuackScript',
+        title: '',
         logo: {
           alt: 'The JS killer',
-          src: 'img/logo.svg',
+          src: 'img/QuackScriptLogoHorizontal.png',
         },
         items: [
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/niv3k-el-pato/quackscript',
             label: 'GitHub',
             position: 'right',
           },

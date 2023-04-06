@@ -4,20 +4,12 @@ import {
     AssignmentNode, AssignmentOperatorNode, BinaryExpressionNode, 
     DeclarationNode, ExpressionNode,
     FuncCallNode,
-    IdentifierNode, LiteralNode, ModuleNode, OperatorTypes,
+    IdentifierNode, LiteralNode, ModuleNode,
     ArgsNode,
-    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode, NumberLiteralNode, TextLiteralNode, BooleanLiteralNode, NothingLiteralNode, DataTypeNode } from './types';
+    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode, NumberLiteralNode, TextLiteralNode, BooleanLiteralNode, NothingLiteralNode, DataTypeNode, MathematicalOperatorTypes, IfStatementNode } from './types';
 
 
 export default class Parser {
-
-    private isOperator = (token: Token) => (
-        token.type === 'ADDITION' ||
-        token.type === 'SUBTRACTION' ||
-        token.type === 'MULTIPLICATION' ||
-        token.type === 'MODULUS' ||
-        token.type === 'DIVISION'
-    );
 
     /*
         can be replaced with just literal
@@ -108,8 +100,24 @@ export default class Parser {
         return node;
     };
 
+    private isOperator = (token: Token) => (
+        token.type === 'ADDITION' ||
+        token.type === 'SUBTRACTION' ||
+        token.type === 'MULTIPLICATION' ||
+        token.type === 'MODULUS' ||
+        token.type === 'DIVISION' ||
+        token.type === 'AND' ||
+        token.type === 'OR' ||
+        token.type === 'LESS_THAN' ||
+        token.type === 'GREATER_THAN' ||
+        token.type === 'LESS_THAN_OR_EQUALS' ||
+        token.type === 'GREATER_THAN_OR_EQUALS' ||
+        token.type === 'EQUALS' ||
+        token.type === 'NOT_EQUALS'
+    );
+
     /*
-        <operator> := + | - | * | %
+        <operator> := + | - | * | % | && | || | < | <= | > | >= | ==  | !=
     */
     private operator = () => {
         const token = this._cursor.readCurrentToken();
@@ -117,7 +125,7 @@ export default class Parser {
         
         if (this.isOperator(token)){ 
             this._cursor.advanceCursor(1);
-            return token.value as OperatorTypes;
+            return token.value as MathematicalOperatorTypes;
         }
 
         return null;
@@ -529,6 +537,57 @@ export default class Parser {
     };
 
     /*
+        <if-statement-start> := <if> (: <expression> :) <code-block>
+        <if-statement> := <if-statement-start> | <if-statement-start> <else> <code-block>
+    */
+    private ifStatement = (): IfStatementNode | null => {
+        const token = this._cursor.readCurrentToken();
+        if (token?.type !== 'IF') return null;
+
+        this._cursor.advanceCursor(1);
+        const possibleOpenBracket = this._cursor.readCurrentToken();
+        if (possibleOpenBracket?.type !== 'BRACKET_OPEN'){
+            throw new Error(`Expected (: but found ${possibleOpenBracket?.value}`);
+        }
+
+        this._cursor.advanceCursor(1);
+        const expression = this.expression();
+        if (!expression) {
+            throw new Error('Expected expression after if');
+        }
+
+        const possibleCloseBracket = this._cursor.readCurrentToken();
+        if (possibleCloseBracket?.type !== 'BRACKET_CLOSE') {
+            throw new Error(`Expected :) but found ${possibleCloseBracket?.value}`);
+        }
+        this._cursor.advanceCursor(1);
+
+        const codeBlock = this.codeBlock();
+        if (codeBlock === null) {
+            throw new Error('Expected code block');
+        }
+
+        const ifNode: IfStatementNode = {
+            condition: expression,
+            type: 'IfStatement',
+            trueExpression: codeBlock,
+            falseExpression: null
+        };
+
+        const possibleElseNode = this._cursor.readCurrentToken();
+        if (possibleElseNode?.type === 'ELSE') {
+            this._cursor.advanceCursor(1);
+            const elseCodeBlock = this.codeBlock();
+            if (elseCodeBlock === null) {
+                throw new Error('Expected code block after else');
+            }
+            ifNode.falseExpression = elseCodeBlock;
+        }
+
+        return ifNode;
+    };
+
+    /*
         <return-statement> := <return> <expression> <terminator>
     */
     private returnStatement = (): ReturnStatementNode | null => {
@@ -548,7 +607,7 @@ export default class Parser {
     };
 
     /*
-        <statement> := <declaration> <terminator> | <assignment> <terminator> | <expression> <terminator> | <returnStatement>
+        <statement> := <declaration> <terminator> | <assignment> <terminator> | <expression> <terminator> | <if-statement> <terminator> | <returnStatement>
     */
     private statement = (): StatementNode | null => {
         const firstToken = this._cursor.readCurrentToken();
@@ -562,6 +621,16 @@ export default class Parser {
                 body: declaration,
                 type: 'Statement'
             };
+        }
+
+        if (!generatedNode) {
+            const ifStatement = this.ifStatement();
+            if (ifStatement) {
+                generatedNode = {
+                    body: ifStatement,
+                    type: 'Statement'
+                };
+            }
         }
 
         if (!generatedNode) {

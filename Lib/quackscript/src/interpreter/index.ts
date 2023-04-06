@@ -1,9 +1,11 @@
 import { DataTypeUtil } from '../dataTypes/dataTypeUtil';
 import { 
-    AssignmentNode, BinaryExpressionNode, CodeBlockNode, DeclarationNode, ExpressionNode,
+    AssignmentNode, BinaryExpressionNode, BooleanLiteralNode, CodeBlockNode, DeclarationNode, ExpressionNode,
     FuncCallNode, FuncDeclarationNode, GenericFuncDeclarationNode, IdentifierNode,
+    IfStatementNode,
     InternalFuncDeclarationNode, ModuleNode, NothingLiteralNode, NumberLiteralNode, ReturnStatementNode,
-    StatementNode } from '../parser/types';
+    StatementNode, 
+    TextLiteralNode} from '../parser/types';
 import { executeInternalFunc } from '../stdLibrary/standardLibrary';
 import { Memory } from './memory';
 import { Value } from './types';
@@ -94,7 +96,7 @@ export default class Interpreter {
         return null;
     }
 
-    private executeStatement(statement: StatementNode) {
+    private executeStatement(statement: StatementNode): Value | null {
         switch (statement.body.type) {
         case 'Declaration':
             this.executeDeclaration(statement.body as DeclarationNode);
@@ -106,8 +108,39 @@ export default class Interpreter {
             return this.executeExpressionNode(statement.body as ExpressionNode);
         case 'ReturnStatement':
             return this.executeExpressionNode((statement.body as ReturnStatementNode).value);
+        case 'IfStatement':
+            this.executeIfStatementNode(statement.body as IfStatementNode);
+            return null;
         }
     }
+
+    private executeIfStatementNode = (node: IfStatementNode): null => {
+        const value = this.executeExpressionNode(node.condition);
+        let isConditionTrue = false;
+        switch (value.type){
+        case 'BooleanLiteral':
+            isConditionTrue = (value as BooleanLiteralNode).value;
+            break;
+        case 'NothingLiteral':
+            isConditionTrue = false;
+            break;
+        case 'FuncDeclaration':
+        case 'InternalFuncDeclaration':
+        case 'NumberLiteral':
+        case 'TextLiteral':
+        case 'Vector2Literal':
+        case 'Vector3Literal':
+            throw new Error('Invalid boolean expression');
+        }
+
+        if (isConditionTrue) {
+            this.executeBlock(node.trueExpression);
+        } else if (node.falseExpression !== null) {
+            this.executeBlock(node.falseExpression);
+        }
+
+        return null;
+    };
 
     private executeDeclaration = (node: DeclarationNode) => {
         const typeOfAssignment = node.declaratorType;
@@ -200,7 +233,7 @@ export default class Interpreter {
         return returnedValue;
     };
 
-    private executeExpressionNode = (node:ExpressionNode): Value | null => {
+    private executeExpressionNode = (node:ExpressionNode): Value => {
         switch (node.body.type) {
         case 'FuncDeclaration':
         case 'TextLiteral':
@@ -220,56 +253,165 @@ export default class Interpreter {
     };
 
     private executeBinaryExpression = (node: BinaryExpressionNode): Value => {
-        const leftNode = node.left;
         const rightValue = this.executeExpressionNode(node.right);
-        let leftValue: null | number = null;
         if (rightValue === null) {
             throw new Error('Internal error binary expression must have right value');
         }
-        if (rightValue.type !== 'NumberLiteral') {
-            throw new Error('Binary expression of this type has not been implemented yet');
+
+        if (
+            rightValue.type === 'FuncDeclaration' ||
+            rightValue.type === 'InternalFuncDeclaration'
+        ) {
+            throw new Error('Invalid binary expression');
         }
-        const rightValueParsed = (rightValue as NumberLiteralNode).value;
-        switch (leftNode.type){
-        case 'Identifier':
-            // eslint-disable-next-line no-case-declarations
-            const valueFromMemory = this._memory.get(leftNode.value);
-            if (valueFromMemory.type !== 'number') {
-                throw new Error('binary expression of this type has not been implemented yet');
+
+        let leftValueUnwrapped: Value = { 
+            type: 'NothingLiteral'
+        };
+
+        if (node.left.type === 'Identifier') {
+            const valueFromMemory = this._memory.get(node.left.value);
+            if (valueFromMemory.type === 'func' ||
+                valueFromMemory.type === 'internalFunc') {
+                throw new Error('Invalid binary expression');
             }
-            leftValue = (valueFromMemory.value as NumberLiteralNode).value;
-            break;
-        case 'NumberLiteral':
-            leftValue = (leftNode as NumberLiteralNode).value as number;
-            break;
-        case 'TextLiteral':
-            throw new Error('Binary expression of this type has not been implemented yet');
+            leftValueUnwrapped = valueFromMemory.value;
+        } else {
+            leftValueUnwrapped = node.left;
         }
 
-        if (leftValue === null) throw new Error('Internal error must have left value');
+        // Both are boolean - binary expression
+        if (leftValueUnwrapped.type === 'BooleanLiteral' && rightValue.type === 'BooleanLiteral') {
+            const left = leftValueUnwrapped as BooleanLiteralNode;
+            const right = rightValue as BooleanLiteralNode;
+            let finalValue: boolean | null = null;
 
-        let computedValue: number | null = null;
-        switch (node.operator) {
-        case '*':
-            computedValue = leftValue * rightValueParsed;
-            break;
-        case '+':
-            computedValue = leftValue + rightValueParsed;
-            break;
-        case '-':
-            computedValue = leftValue - rightValueParsed;
-            break;
-        case '/':
-            computedValue = leftValue / rightValueParsed;
-            break;
-        case '%':
-            computedValue = leftValue % rightValueParsed;
-            break;
+            switch (node.operator) {
+            case '!=':
+                finalValue = left.value !== right.value;
+                break;
+            case '&&':
+                finalValue = left.value && right.value;
+                break;
+            case '==':
+                finalValue = left.value === right.value;
+                break;
+            case '||':
+                finalValue = left.value || right.value;
+                break;
+            }
+
+            if (finalValue === null) {
+                throw new Error('Unable to parse binary expression');
+            }
+            return {
+                type: 'BooleanLiteral',
+                value: finalValue
+            } as BooleanLiteralNode;
         }
-        return {
-            type: 'NumberLiteral',
-            value: computedValue
-        } as NumberLiteralNode;
+
+        if (leftValueUnwrapped.type === 'NumberLiteral' && rightValue.type === 'NumberLiteral') {
+            const left = leftValueUnwrapped as NumberLiteralNode;
+            const right = rightValue as NumberLiteralNode;
+            let finalValue: number | boolean | null = null;
+
+            switch (node.operator) {
+            case '!=':
+                finalValue = left.value !== right.value;
+                break;
+            case '%':
+                finalValue = left.value % right.value;
+                break;
+            case '*':
+                finalValue = left.value * right.value;
+                break;
+            case '-':
+                finalValue = left.value - right.value;
+                break;
+            case '+':
+                finalValue = left.value + right.value;
+                break;
+            case '/':
+                finalValue = left.value / right.value;
+                break;
+            case '<':
+                finalValue = left.value < right.value;
+                break;
+            case '<=':
+                finalValue = left.value <= right.value;
+                break;
+            case '>=':
+                finalValue = left.value >= right.value;
+                break;
+            case '==':
+                finalValue = left.value === right.value;
+                break;
+            case '>':
+                finalValue = left.value > right.value;
+                break;
+            }
+
+            if (typeof finalValue === 'boolean') {
+                return {
+                    type: 'BooleanLiteral',
+                    value: finalValue
+                } as BooleanLiteralNode;
+            }
+
+            if (typeof finalValue === 'number') {
+                return {
+                    type: 'NumberLiteral',
+                    value: finalValue
+                } as NumberLiteralNode;
+            }
+        }
+
+        if (leftValueUnwrapped.type === 'TextLiteral' && rightValue.type === 'TextLiteral') {
+            const left = leftValueUnwrapped as TextLiteralNode;
+            const right = rightValue as TextLiteralNode;
+            let finalValue: string | boolean | null = null;
+        
+            switch (node.operator){
+            case '!=':
+                finalValue = left.value !== right.value;
+                break;
+            case '==':
+                finalValue = left.value === right.value;
+                break;
+            case '+':
+                finalValue = left.value.concat(right.value);
+                break;
+            }
+        
+            if (typeof finalValue === 'string') {
+                return {
+                    type: 'TextLiteral',
+                    value: finalValue
+                } as TextLiteralNode;
+            }
+        
+            if (typeof finalValue === 'boolean') {
+                return {
+                    type: 'BooleanLiteral',
+                    value: finalValue
+                } as BooleanLiteralNode;
+            }
+        }
+
+        if (
+            leftValueUnwrapped.type !== rightValue.type &&
+            node.operator === '!=' ||
+            node.operator === '=='
+        ){
+            return {
+                type: 'BooleanLiteral',
+                value: node.operator === '!='
+            } as BooleanLiteralNode;
+        }
+
+        // TODO - implement vectors
+
+        throw new Error('Unable to parse binary expression');
     };
 
 }

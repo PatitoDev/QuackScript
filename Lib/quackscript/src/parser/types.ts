@@ -1,4 +1,3 @@
-
 export type LiteralNodeTypes = 'TextLiteral' |
     'NumberLiteral' |
     'NothingLiteral' |
@@ -7,6 +6,7 @@ export type LiteralNodeTypes = 'TextLiteral' |
     'BooleanLiteral';
 
 export type NodeTypes = LiteralNodeTypes |
+    'IfStatement' |
     'BinaryExpression' |
     'Expression' |
     'Module' |
@@ -29,7 +29,10 @@ export type NodeTypes = LiteralNodeTypes |
 export type DataTypes = 'boolean' | 'text' | 'nothing' |
     'vector2' | 'vector3' | 'func' | 'list' | 'number';
 
-export type OperatorTypes = '+' | '-' | '/' | '%' | '*';
+export type MathematicalOperatorTypes = '+' | '-' | '/' | '%' | '*';
+export type ComparisonOperatorTypes = '==' | '>=' | '>' | '<' | '<=' | '!=';
+export type LogicalOperatorTypes = '&&' | '||';
+export type OperatorTypes = MathematicalOperatorTypes | ComparisonOperatorTypes | LogicalOperatorTypes;
 
 export interface Node <T extends NodeTypes = NodeTypes> {
     type: T
@@ -99,7 +102,7 @@ export interface DeclarationNode extends Node<'Declaration'> {
 }
 
 export interface StatementNode extends Node<'Statement'> {
-    body: DeclarationNode | AssignmentNode | ExpressionNode | ReturnStatementNode
+    body: DeclarationNode | AssignmentNode | ExpressionNode | ReturnStatementNode | IfStatementNode
 }
 
 export interface ModuleNode extends Node<'Module'> {
@@ -143,5 +146,8 @@ export interface ReturnStatementNode extends Node<'ReturnStatement'> {
     value: ExpressionNode
 }
 
-// <statement> := <expression> <terminator> | <expression> <statement>
-export type Statement = Node
+export interface IfStatementNode extends Node<'IfStatement'> {
+    condition: ExpressionNode,
+    trueExpression: CodeBlockNode,
+    falseExpression: CodeBlockNode | null
+}

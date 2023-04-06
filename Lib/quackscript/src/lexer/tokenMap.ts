@@ -7,8 +7,6 @@ export const tokenMap: Record<Lexemes, RegExp> = {
 
     'RETURN': /^return(?=[^a-z-A-Z0-9]|$)/,
 
-    'ELSE': /^else(?=[^a-z-A-Z0-9]|$)/,
-
     'NUMBER_VALUE': /^[0-9]*\.?[0-9]*/,
 
     'NUMBER_TYPE': /^number(?=[^a-z-A-Z0-9]|$)/,
@@ -53,25 +51,27 @@ export const tokenMap: Record<Lexemes, RegExp> = {
 
     'ARROW_FUNCTION': /^:>/,
 
-    'AND': /^and(?=[^a-zA-Z0-9]|$)/,
+    'AND': /^&&/,
 
-    'OR': /^or(?=[^a-zA-Z0-9]|$)/,
+    'OR': /^\|\|/,
 
-    'LESS_THAN': /^lt(?=[^a-zA-Z0-9]|$)/,
+    'LESS_THAN_OR_EQUALS': /^<=/,
 
-    'LESS_THAN_OR_EQUALS': /^leq(?=[^a-zA-Z0-9]|$)/,
+    'LESS_THAN': /^</,
 
-    'GREATER_THAN': /^gt(?=[^a-zA-Z0-9]|$)/,
+    'GREATER_THAN_OR_EQUALS': /^>=/,
 
-    'GREATER_THAN_OR_EQUALS': /^geq(?=[^a-zA-Z0-9]|$)/,
+    'GREATER_THAN': /^>/,
 
-    'NOT_EQUALS': /^nteq(?=[^a-zA-Z0-9]|$)/,
+    'NOT_EQUALS': /^!=/,
 
-    'EQUALS': /^eq(?=[^a-zA-Z0-9]|$)/,
+    'EQUALS': /^==/,
 
-    'IF': /^when(?=[^a-zA-Z0-9]|$)/,
+    'IF': /^if(?=[^a-zA-Z0-9]|$)/,
 
     'THEN': /^then(?=[^a-zA-Z0-9]|$)/,
+
+    'ELSE': /^else(?=[^a-z-A-Z0-9]|$)/,
 
     'TEXT_TYPE': /^text(?=[^a-zA-Z0-9]|$)/,
 

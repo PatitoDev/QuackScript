@@ -1,5 +1,5 @@
-import { jsReservedWords, tokenMap } from '../tokenMap';
-import { TokenType } from '../types';
+import { Lexemes } from './lexemes';
+import { tokenMap } from './tokenMap';
 
 export interface Token {
     value: string,
@@ -8,7 +8,7 @@ export interface Token {
         line: number,
         char: number
     }
-    type: TokenType,
+    type: Lexemes,
 }
 
 export default class Lexer {
@@ -30,7 +30,7 @@ export default class Lexer {
             hasMoreToParse = false;
 
             for (const tokenType of Object.keys(tokenMap)) {
-                const result = this.parseToken(nextData, tokenType as TokenType);
+                const result = this.parseToken(nextData, tokenType as Lexemes);
                 if (result) {
                     generatedTokens.push({
                         type: result.token,
@@ -63,14 +63,13 @@ export default class Lexer {
         return generatedTokens;
     };
 
-    private parseToken = (data: string, token: TokenType) => {
-        const regexToExecute = tokenMap[token]?.regex;
+    private parseToken = (data: string, token: Lexemes) => {
+        const regexToExecute = tokenMap[token];
         if (regexToExecute) {
             const result = this.extractTokenWithRegex(data, regexToExecute);
             if (result) {
-                const isReserved = (jsReservedWords.find((word) => word === result.matchedValue));
                 return {
-                    token: (isReserved ? 'JS_RESERVED_WORD' : token) as TokenType,
+                    token,
                     value: result.matchedValue,
                     splicedCode: result.splicedCode
                 };

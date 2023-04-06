@@ -1,5 +1,5 @@
 import { Token } from '../lexer';
-import { Cursor } from './tokenCursor';
+import { Cursor } from './cursor';
 import { 
     AssignmentNode, AssignmentOperatorNode, BinaryExpressionNode, 
     DeclarationNode, ExpressionNode,
@@ -430,7 +430,7 @@ export default class Parser {
                 type: 'DataType',
                 value: 'func'
             };
-        case 'FUNC':
+        case 'FUNC_TYPE':
             return {
                 type : 'DataType',
                 value: 'func'
@@ -500,7 +500,7 @@ export default class Parser {
         };
 
         if (declarationExtras) {
-            if (declarationExtras.type === 'QUESTION'){
+            if (declarationExtras.type === 'QUESTION_MARK'){
                 declarationNode.isOptional = true;
                 this._cursor.advanceCursor(1);
             }

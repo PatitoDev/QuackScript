@@ -74,7 +74,7 @@ Quackscript provides the following data types:
 1. `boolean` - `true` and `false`.
 1. `nothing` - A data type which denotes the lack of a value. Non initialized variables will contain `nothing` and non returning functions will return `nothing`
 1. `number` - An integer or floating point number. Eg. `32` or `32.5`
-1. `string` - A sequence of characters. Eg. `'Hello World'`
+1. `text` - A sequence of characters. Eg. `'Hello World'`
 1. `vector2` - A 2 dimensional vector containing `x` and `y` `number` values
 1. `vector3` - A 3 dimensional vector containing `x`, `y` and `z` `number` values
 1. `object` - 

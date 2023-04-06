@@ -1,0 +1,10 @@
+{
+  "logo.alt": {
+    "message": "quack quack quack",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.GitHub": {
+    "message": "quack",
+    "description": "Navbar item with label GitHub"
+  }
+}

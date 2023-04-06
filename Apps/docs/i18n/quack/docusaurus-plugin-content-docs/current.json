@@ -1,0 +1,14 @@
+{
+  "version.label": {
+    "message": "Quack",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Guide": {
+    "message": "Quack",
+    "description": "The label for category Guide in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Reference": {
+    "message": "Quack",
+    "description": "The label for category Reference in sidebar tutorialSidebar"
+  }
+}

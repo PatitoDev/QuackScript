@@ -7,6 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'QuackScript',
+  titleDelimiter: '🦆',
   tagline: 'The new JS killer',
   favicon: 'img/favicon.ico',
 
@@ -16,11 +17,6 @@ const config = {
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/docs/',
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'niv3k-el-pato', // Usually your GitHub org/user name.
-  projectName: 'quackscript', // Usually your repo name.
-
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
@@ -29,7 +25,21 @@ const config = {
   // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    path: 'i18n',
+    locales: ['en', 'es', 'quack'],
+    localeConfigs: {
+      en: {
+        htmlLang: 'en-GB',
+      },
+      quack: {
+        label: 'Duck Lang',
+        path: 'quack'
+      },
+      es: {
+        label: 'Espanol',
+        path: 'es'
+      },
+    }
   },
 
   presets: [
@@ -56,14 +66,23 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
+      colorMode: {
+        defaultMode: 'dark',
+        respectPrefersColorScheme: true
+      },
       image: 'img/QuackScriptLogoHorizontal.png',
       navbar: {
         title: '',
         logo: {
+          href: '/',
           alt: 'The JS killer',
           src: 'img/QuackScriptLogoHorizontal.png',
         },
         items: [
+          {
+            type: 'localeDropdown',
+            position: 'right',
+          },
           {
             href: 'https://github.com/niv3k-el-pato/quackscript',
             label: 'GitHub',
@@ -101,7 +120,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/niv3k-el-pato/quackscript',
               },
             ],
           },
@@ -111,6 +130,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+        defaultLanguage: 'typescript',
       },
     }),
 };

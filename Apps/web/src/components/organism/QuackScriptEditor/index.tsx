@@ -3,7 +3,7 @@ import CodeEditor from '../../molecules/CodeEditor';
 import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser } from 'quackscript';
-import { BooleanLiteralNode, LiteralNode, NumberLiteralNode, TextLiteralNode } from 'quackscript/src/parser/types';
+import { BooleanLiteralNode, NumberLiteralNode, TextLiteralNode } from 'quackscript/src/parser/types';
 
 const defaultQuackTextValue = `QUACK exampleFunction <- (:value:) :> {: return value🦆:}🦆
 
@@ -31,7 +31,7 @@ const QuackScriptEditor = () => {
 
     const onQuackCodeChange = (value:string | undefined) => {
         const valueWithoutSemicolons = value?.replaceAll(';', '🦆');
-        
+
         setQuackCode(valueWithoutSemicolons ?? '');
     };
 

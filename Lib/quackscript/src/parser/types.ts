@@ -29,8 +29,6 @@ export type NodeTypes = LiteralNodeTypes |
 export type DataTypes = 'boolean' | 'text' | 'nothing' |
     'vector2' | 'vector3' | 'func' | 'list' | 'number';
 
-
-
 export type OperatorTypes = '+' | '-' | '/' | '%' | '*';
 
 export interface Node <T extends NodeTypes = NodeTypes> {

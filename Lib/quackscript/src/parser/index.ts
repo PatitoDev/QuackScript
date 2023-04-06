@@ -6,7 +6,7 @@ import {
     FuncCallNode,
     IdentifierNode, LiteralNode, ModuleNode, OperatorTypes,
     ArgsNode,
-    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode } from './types';
+    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode, NumberLiteralNode, TextLiteralNode, BooleanLiteralNode, NothingLiteralNode, DataTypeNode } from './types';
 
 
 export default class Parser {
@@ -45,29 +45,50 @@ export default class Parser {
     };
 
     /*
-        <literal> := <number> | <string>;
+        <literal> := <number> | <text> | <boolean> | <nothing> | <vector2> | <vector3>;
     */
-    private literal = () => {
+    private literal = ():LiteralNode | null => {
         const token = this._cursor.readCurrentToken();
         if (!token) return null;
 
-        if (token.type === 'NUMBER'){
+        if (token.type === 'NUMBER_VALUE'){
             this._cursor.advanceCursor(1);
             return {
-                raw: token.value,
                 type: 'NumberLiteral',
                 value: Number(token.value)
-            } as LiteralNode<number>;
+            } as NumberLiteralNode;
         }
-    
-        if (token.type === 'TEXT'){
+
+        if (token.type === 'TEXT_VALUE'){
             this._cursor.advanceCursor(1);
             return {
-                raw: token.value,
-                type: 'StringLiteral',
+                type: 'TextLiteral',
                 value: token.value
-            } as LiteralNode<string>;
+            } as TextLiteralNode;
         }
+
+        if (token.type === 'BOOLEAN_VALUE'){
+            this._cursor.advanceCursor(1);
+            if (
+                token.value !== 'true' &&
+                token.value !== 'false') {
+                throw new Error('Internal error');
+            }
+            const value = token.value === 'true';
+            return {
+                type: 'BooleanLiteral',
+                value: value 
+            } as BooleanLiteralNode;
+        }
+
+        if (token.type === 'NOTHING'){
+            this._cursor.advanceCursor(1);
+            return {
+                type: 'NothingLiteral'
+            } as NothingLiteralNode;
+        }
+
+        // TODO - add vector literals
 
         return null;
     };
@@ -377,9 +398,64 @@ export default class Parser {
         };
     };
 
+    // <dataType> := <colon> <data-type>
+    private dataTypeDeclaration = (): DataTypeNode | null => {
+        const token = this._cursor.readCurrentToken();
+        if (token?.type !== 'COLON') return null;
+        this._cursor.advanceCursor(1);
+        const possibleDataType = this._cursor.readCurrentTokenAndAdvanceByOne();
+        switch (possibleDataType?.type) {
+        case 'TEXT_TYPE':
+            return {
+                type: 'DataType',
+                value: 'text'
+            };
+        case 'NUMBER_TYPE':
+            return {
+                type: 'DataType',
+                value: 'number'
+            };
+        case 'BOOLEAN_TYPE':
+            return {
+                type: 'DataType',
+                value: 'boolean'
+            };
+        case 'NOTHING':
+            return {
+                type: 'DataType',
+                value: 'nothing'
+            };
+        case 'ARROW_FUNCTION':
+            return {
+                type: 'DataType',
+                value: 'func'
+            };
+        case 'FUNC':
+            return {
+                type : 'DataType',
+                value: 'func'
+            };
+        case 'VECTOR2':
+            return {
+                type : 'DataType',
+                value: 'vector2'
+            };
+        case 'VECTOR3':
+            return {
+                type : 'DataType',
+                value: 'vector3'
+            };
+        }
+        throw new Error(`Expected data type but found ${this._cursor.readCurrentToken()?.value}`);
+    };
+
     /*
-        QUACK test <-> liter🦆
-        <declaration> := <declaration-operator> <assignment>
+        QUACK test <- string
+        quack test?: string
+        QUACK test: string <- string
+        <inferred-identifier-declaration> := <declaration-operator> <identifier>
+        <identifier-declaration> := <declaration-operator> <identifier> <colon> <data-type> | <declaration-operator> <identifier> <question> <colon> <data-type>
+        <declaration> := <inferred-identifier-declaration> <assignment-operator> <expression> | <identifier-declaration> <assignment-operator> <expression> | <identifier-declaration>
     */
     private declaration = (): DeclarationNode | null => {
         const token = this._cursor.readCurrentToken();
@@ -398,14 +474,58 @@ export default class Parser {
         if (!nextNode) throw new Error('expected assignment');
         this._cursor.advanceCursor(1);
 
-        const assignmentNode = this.assignment();
-        if (!assignmentNode) throw new Error(`expected assignment found ${nextNode.value}`);
+        const identifier = this.identifier();
+        if (!identifier) throw new Error('expected identifier');
 
-        return {
+        const assignment: AssignmentNode = {
+            type: 'Assignment',
+            identifier,
+            expression: {
+                type: 'Expression',
+                body: {
+                    type: 'NothingLiteral'
+                } as NothingLiteralNode
+            },
+        };
+
+        // this node can only be <question> | <colon> | <assignment-operator>
+        const declarationExtras = this._cursor.readCurrentToken();
+
+        const declarationNode: DeclarationNode = {
             declaratorType: assignmentType,
             type: 'Declaration',
-            assignmentNode
+            assignmentNode: assignment,
+            isOptional: false,
+            dataType: null
         };
+
+        if (declarationExtras) {
+            if (declarationExtras.type === 'QUESTION'){
+                declarationNode.isOptional = true;
+                this._cursor.advanceCursor(1);
+            }
+            declarationNode.dataType = this.dataTypeDeclaration();
+            // check that the next item is a <-
+            const mustBeInitialized = !(declarationNode.dataType?.value === 'nothing' || declarationNode.isOptional);
+            const possibleAssignmentOperator = this.assignMentOperator();
+            if (possibleAssignmentOperator === null){
+                if (mustBeInitialized) {
+                    throw new Error(`${identifier.value} must be initialized`);
+                } else {
+                    return declarationNode;
+                }
+            }
+
+            const expressionNode = this.expression();
+            // value can't be 'nothing' so we must assign something
+            if (expressionNode) {
+                declarationNode.assignmentNode.expression = expressionNode;
+            } else if (mustBeInitialized) {
+                throw new Error(`${identifier.value} must be initialized`);
+            }
+        }
+
+        return declarationNode;
     };
 
     /*
@@ -489,7 +609,9 @@ export default class Parser {
     private _cursor: Cursor = new Cursor([]);
 
     public parse = (tokens: Array<Token>) => {
-        const excludedWhiteSpace = tokens.filter((t) => t.type !== 'WHITESPACE' && t.type !== 'NEW_LINE');
+        const excludedWhiteSpace = tokens
+            .filter((t) => t.type !== 'WHITESPACE' && t.type !== 'NEW_LINE')
+            .filter((t) => t.type !== 'COMMENT_SHORT' && t.type !== 'COMMENT_LONG');
         console.log(excludedWhiteSpace);
         this._cursor = new Cursor(excludedWhiteSpace);
 

@@ -1,29 +1,21 @@
 import { InternalFuncDeclarationNode } from '../parser/types';
-import { Memory, MemoryObjectBase, MemoryValue } from '../interpreter/memory';
+import { Memory } from '../interpreter/memory';
+import { MemoryValue, Value } from '../interpreter/types';
 
 export const executeInternalFunc = (node: InternalFuncDeclarationNode,
     memory: Memory,
-    stdOut: (outcome: MemoryValue) => void): MemoryValue | null => {
+    stdOut: (outcome: Value) => void): Value | null => {
     switch (node.identifier){
     case 'quackprint':
         return execQuackPrint(memory, stdOut);
-    case 'sayQuack':
-        return execQuack(memory, stdOut);
     }
 
     return null;
 };
 
-const execQuack = (memory: Memory, stdOut: (outcome:MemoryValue) => void) : MemoryValue | null => {
-    return {
-        type: 'literal',
-        value: 'quack'
-    };
-};
-
-const execQuackPrint = (memory: Memory, stdOut: (outcome:MemoryValue) => void): MemoryValue | null => {
+const execQuackPrint = (memory: Memory, stdOut: (outcome:Value) => void): Value | null => {
     const value = memory.get('value');
-    stdOut(value);
+    stdOut(value.value);
     return null;
 };
 
@@ -32,7 +24,6 @@ const _standardLibrary: Array<{
     params: Array<string>
 }> = [
     { identifier: 'quackprint', params: ['value'] },
-    { identifier: 'sayQuack', params: [] },
 ];
 
 const libraryAsArray = _standardLibrary.map((value) => ({
@@ -50,9 +41,9 @@ const libraryAsArray = _standardLibrary.map((value) => ({
         },
         type: 'InternalFuncDeclaration',
     } as InternalFuncDeclarationNode
-}) as MemoryObjectBase);
+}) as MemoryValue);
 
-const standardLibrary: Record<string, MemoryObjectBase> = libraryAsArray
+const standardLibrary: Record<string, MemoryValue> = libraryAsArray
     .reduce((a, b) => ({ ...a, [b.identifier]: b }), {});
 
 export default standardLibrary;

@@ -49,6 +49,12 @@ export const tokenMap: Partial<Record<TokenType, {
     regex: RegExp,
     js?: string,
 }>> = {
+    'COMMENT_SHORT': {
+        regex: /^\/\/.*?\n/
+    },
+    'COMMENT_LONG': {
+        regex: /^\/\*(\s|\S)*\*\//
+    },
     'BREAK': {
         regex: /^break(?=[^a-zA-Z0-9]|$)/,
     },
@@ -57,14 +63,12 @@ export const tokenMap: Partial<Record<TokenType, {
     },
     'AWAIT' : {
         regex: /^wait(?=[^a-z-A-Z0-9]|$)/,
-        js: 'await',
     },
     'CASE' : {
         regex: /^case(?=[^a-z-A-Z0-9]|$)/
     },
     'CATCH' : {
         regex: /^capture(?=[^a-z-A-Z0-9]|$)/,
-        js: 'catch'
     },
     'CLASS' : {
         regex: /^class(?=[^a-z-A-Z0-9]|$)/
@@ -114,8 +118,11 @@ export const tokenMap: Partial<Record<TokenType, {
     'IMPORT' : {
         regex: /^import(?=[^a-z-A-Z0-9]|$)/
     },
-    'NUMBER':  {
+    'NUMBER_VALUE':  {
         regex: /^[0-9]*\.?[0-9]*/,
+    },
+    'NUMBER_TYPE': {
+        regex: /^number(?=[^a-z-A-Z0-9]|$)/
     },
     'WHITESPACE': {
         regex: /^[^\S\n]+/,
@@ -146,95 +153,103 @@ export const tokenMap: Partial<Record<TokenType, {
     },
     'ASSIGNMENT_LET': {
         regex: /^quack(?=[^a-zA-Z0-9]|$)/,
-        js: 'let'
     } ,
     'ASSIGNMENT_CONST': {
         regex: /^QUACK(?=[^a-zA-Z0-9]|$)/,
-        js: 'const',
     } ,
     'ASSIGNMENT_OPERATOR': {
         regex: /^<-/,
-        js: '=',
     },
     'ASSIGNMENT_OBJECT': {
         regex: /^<->/,
-        js: ':',
     } ,
     'BRACKET_OPEN': {
         regex: /^\(:/,
-        js: '('
     },
     'BRACKET_CLOSE': {
         regex: /^:\)/,
-        js: ')'
     } ,
     'SQUARE_BRACKET_OPEN': {
         regex: /^\[:/,
-        js: '['
     } ,
     'SQUARE_BRACKET_CLOSE': {
         regex: /^:\]/,
-        js: ']',
     } ,
     'CURLY_BRACKET_OPEN': {
         regex: /^{:/,
-        js: '{'
     } ,
     'CURLY_BRACKET_CLOSE': {
         regex: /^:}/,
-        js: '}'
     } ,
-    'TEXT': {
+    'TEXT_VALUE': {
         regex: /^'.*?'/,
     },
     'COMMA': {
         regex: /^,/,
-        js: ','
     },
     'ARROW_FUNCTION': {
         regex: /^:>/,
-        js: '=>'
     } ,
     // check
     'AND': {
         regex: /^and(?=[^a-zA-Z0-9]|$)/,
-        js: '&&'
     },
     'OR': {
         regex: /^or(?=[^a-zA-Z0-9]|$)/,
-        js: '||'
     },
     'LESS_THAN': {
         regex: /^lt(?=[^a-zA-Z0-9]|$)/,
-        js: '<'
     },
     'LESS_THAN_OR_EQUALS': {
         regex: /^leq(?=[^a-zA-Z0-9]|$)/,
-        js: '<='
     },
     'GREATER_THAN': {
         regex: /^gt(?=[^a-zA-Z0-9]|$)/,
-        js: '>'
     },
     'GREATER_THAN_OR_EQUALS': {
         regex: /^geq(?=[^a-zA-Z0-9]|$)/,
-        js: '>='
     },
     'NOT_EQUALS': {
         regex: /^nteq(?=[^a-zA-Z0-9]|$)/,
-        js: '!=='
     },
     'EQUALS': {
         regex: /^eq(?=[^a-zA-Z0-9]|$)/,
-        js: '==='
     },
     'IF': {
         regex: /^when(?=[^a-zA-Z0-9]|$)/,
-        js: 'if'
     },
     'THEN': {
         regex: /^then(?=[^a-zA-Z0-9]|$)/,
-        js: ' ',
+    },
+    'TEXT_TYPE': {
+        regex: /^text(?=[^a-zA-Z0-9]|$)/,
+    },
+    'BOOLEAN_VALUE': {
+        regex: /^true|^false(?=[^a-zA-Z0-9]|$)/,
+    },
+    'BOOLEAN_TYPE': {
+        regex: /^bool(?=[^a-zA-Z0-9]|$)/,
+    },
+    'NOTHING': {
+        regex: /^nothing(?=[^a-zA-Z0-9]|$)/,
+    },
+    'VECTOR2': {
+        regex: /^vector2(?=[^a-zA-Z0-9]|$)/,
+    },
+    'VECTOR3': {
+        regex: /^vector3(?=[^a-zA-Z0-9]|$)/,
+    },
+    'FUNC': {
+        regex: /^func(?=[^a-zA-Z0-9]|$)/,
+    },
+    'DOT': {
+        regex: /^\./,
+    },
+    'QUESTION': {
+        regex: /^\?/
+    },
+    'COLON': {
+        regex: /^:/
     },
     'IDENTIFIER': {
         regex: /^[a-zA-Z_]+[a-zA-Z0-9_]*/,

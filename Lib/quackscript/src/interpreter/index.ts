@@ -1,6 +1,12 @@
-import { AssignmentNode, BinaryExpressionNode, CodeBlockNode, DeclarationNode, ExpressionNode, FuncCallNode, FuncDeclarationNode, GenericFuncDeclarationNode, IdentifierNode, InternalFuncDeclarationNode, LiteralNode, ModuleNode, ReturnStatementNode, StatementNode } from '../parser/types';
-import standardLibrary, { executeInternalFunc } from '../stdLibrary/standardLibrary';
-import { Memory, MemoryValue } from './memory';
+import { DataTypeUtil } from '../dataTypes/dataTypeUtil';
+import { 
+    AssignmentNode, BinaryExpressionNode, CodeBlockNode, DeclarationNode, ExpressionNode,
+    FuncCallNode, FuncDeclarationNode, GenericFuncDeclarationNode, IdentifierNode,
+    InternalFuncDeclarationNode, ModuleNode, NothingLiteralNode, NumberLiteralNode, ReturnStatementNode,
+    StatementNode } from '../parser/types';
+import { executeInternalFunc } from '../stdLibrary/standardLibrary';
+import { Memory } from './memory';
+import { Value } from './types';
 
 // TODO - make a stdout to output
 
@@ -37,10 +43,10 @@ export class State {
 export default class Interpreter {
 
     public _memory;
-    private _stdOut: (outcome: MemoryValue) => void;
+    private _stdOut: (outcome: Value) => void;
     private _state: State;
 
-    public constructor(stdout?: (outcome: MemoryValue) => void){
+    public constructor(stdout?: (outcome: Value) => void){
         this._state = new State();
         this._memory = new Memory();
         if (stdout) {
@@ -54,7 +60,7 @@ export default class Interpreter {
         this._memory.clearMemory();
         for (const statement of tree.statements){
             const output = this.executeStatement(statement);
-            if (output !== null){
+            if (output !== null && output.type !== 'NothingLiteral'){
                 this._stdOut(output);
             }
         }
@@ -107,22 +113,29 @@ export default class Interpreter {
         const typeOfAssignment = node.declaratorType;
         const id = node.assignmentNode.identifier.value;
 
-        let value: MemoryValue | null = null;
+        let value: Value | null = null;
         value = this.executeExpressionNode(node.assignmentNode.expression);
-        if (!value) throw new Error('unable to assign null');
-        // TODO - add null type
+        if (!value) {
+            value = {
+                type: 'NothingLiteral',
+            } as NothingLiteralNode;
+        }
+
+        // if we have a type declared assign it else we inferred it
+        const type = node.dataType?.value ?? DataTypeUtil.valueToDataType(value.type);
 
         this._memory.set(id, {
+            isOptional: node.isOptional,
             declarationType: typeOfAssignment,
             identifier: id,
-            type: value.type,
-            value: value.value,
+            type,
+            value: value,
         });
     };
 
     private executeAssignment = (node: AssignmentNode) => {
         const id = node.identifier.value;
-        let value: MemoryValue | null = null;
+        let value: Value | null = null;
         switch (node.expression.type) {
         case 'Expression':
             value = this.executeExpressionNode(node.expression as ExpressionNode);
@@ -134,11 +147,15 @@ export default class Interpreter {
         this._memory.update(id, value);
     };
 
-    private executeFunctionCall = (node: FuncCallNode): MemoryValue | null => {
+    private executeFunctionCall = (node: FuncCallNode): Value => {
         const id = node.identifier.value;
         const memoryValue = this._memory.get(id);
         if (memoryValue.type !== 'func' && memoryValue.type !== 'internalFunc'){
             throw new Error(`tried to call variable '${id}' as a function`);
+        }
+
+        if (memoryValue.value.type === 'NothingLiteral') {
+            throw new Error('tried to call \'nothing\' as a function');
         }
 
         const fn = (memoryValue.value as GenericFuncDeclarationNode);
@@ -155,19 +172,27 @@ export default class Interpreter {
             if (!arg) throw new Error('internal error, index out of bounds');
             const argResult = this.executeExpressionNode(arg);
             if (argResult === null) throw new Error('null as parameter not allowed yet');
+            const dataType = DataTypeUtil.valueToDataType(argResult.type);
             this._memory.set(param.value, {
                 declarationType: 'argument',
                 identifier: param.value,
-                type: argResult.type,
-                value: argResult.value,
+                type: dataType,
+                value: argResult,
+                isOptional: false
             });
         });
 
-        let returnedValue: MemoryValue | null = null;
+        let returnedValue: Value | null = null;
         if (memoryValue.type === 'internalFunc'){
             returnedValue = executeInternalFunc(fn as InternalFuncDeclarationNode, this._memory, this._stdOut);
         } else {
             returnedValue = this.executeStatements((fn as FuncDeclarationNode).body.body);
+        }
+
+        if (returnedValue === null) {
+            returnedValue = {
+                type: 'NothingLiteral'
+            } as NothingLiteralNode;
         }
 
         this._memory.clearScope();
@@ -175,72 +200,76 @@ export default class Interpreter {
         return returnedValue;
     };
 
-    private executeExpressionNode = (node:ExpressionNode): MemoryValue | null => {
+    private executeExpressionNode = (node:ExpressionNode): Value | null => {
         switch (node.body.type) {
+        case 'FuncDeclaration':
+        case 'TextLiteral':
+        case 'BooleanLiteral':
+        case 'NothingLiteral':
+        case 'Vector2Literal':
+        case 'Vector3Literal':
+        case 'NumberLiteral':
+            return node.body;
         case 'FuncCallNode':
             return this.executeFunctionCall(node.body as FuncCallNode);
-        case 'NumberLiteral':
-        case 'StringLiteral':
-            return {
-                value: (node.body as LiteralNode).value,
-                type: 'literal'
-            };
         case 'Identifier':
-            return this._memory.get((node.body as IdentifierNode).value);
+            return this._memory.get((node.body as IdentifierNode).value).value;
         case 'BinaryExpression':
-            return {
-                value: this.executeBinaryExpression(node.body as BinaryExpressionNode),
-                type: 'literal'
-            };
-        case 'FuncDeclaration':
-            return {
-                value: (node.body as FuncDeclarationNode),
-                type: 'func'
-            } ;
+            return this.executeBinaryExpression(node.body as BinaryExpressionNode);
         }
     };
 
-    private executeBinaryExpression = (node: BinaryExpressionNode) => {
+    private executeBinaryExpression = (node: BinaryExpressionNode): Value => {
         const leftNode = node.left;
         const rightValue = this.executeExpressionNode(node.right);
         let leftValue: null | number = null;
         if (rightValue === null) {
             throw new Error('Internal error binary expression must have right value');
         }
-        if (typeof rightValue.value !== 'number') {
+        if (rightValue.type !== 'NumberLiteral') {
             throw new Error('Binary expression of this type has not been implemented yet');
         }
+        const rightValueParsed = (rightValue as NumberLiteralNode).value;
         switch (leftNode.type){
         case 'Identifier':
             // eslint-disable-next-line no-case-declarations
             const valueFromMemory = this._memory.get(leftNode.value);
-            if (valueFromMemory.type !== 'literal') {
-                throw new Error(`Unable to evaluate '${valueFromMemory.identifier}'`);
+            if (valueFromMemory.type !== 'number') {
+                throw new Error('binary expression of this type has not been implemented yet');
             }
-            if (typeof valueFromMemory.value !== 'number') {
-                throw new Error('Binary expression of this type has not been implemented yet');
-            }
-            leftValue = valueFromMemory.value as number;
+            leftValue = (valueFromMemory.value as NumberLiteralNode).value;
             break;
         case 'NumberLiteral':
-            leftValue = leftNode.value as number;
+            leftValue = (leftNode as NumberLiteralNode).value as number;
             break;
-        case 'StringLiteral':
+        case 'TextLiteral':
             throw new Error('Binary expression of this type has not been implemented yet');
         }
 
+        if (leftValue === null) throw new Error('Internal error must have left value');
+
+        let computedValue: number | null = null;
         switch (node.operator) {
         case '*':
-            return leftValue * rightValue.value;
+            computedValue = leftValue * rightValueParsed;
+            break;
         case '+':
-            return leftValue + rightValue.value;
+            computedValue = leftValue + rightValueParsed;
+            break;
         case '-':
-            return leftValue - rightValue.value;
+            computedValue = leftValue - rightValueParsed;
+            break;
         case '/':
-            return leftValue / rightValue.value;
+            computedValue = leftValue / rightValueParsed;
+            break;
         case '%':
-            return leftValue % rightValue.value;
+            computedValue = leftValue % rightValueParsed;
+            break;
         }
+        return {
+            type: 'NumberLiteral',
+            value: computedValue
+        } as NumberLiteralNode;
     };
 
 }

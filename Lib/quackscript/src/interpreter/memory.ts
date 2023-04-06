@@ -1,29 +1,10 @@
-import { FuncDeclarationNode, InternalFuncDeclarationNode } from '../parser/types';
+import { DataTypeUtil } from '../dataTypes/dataTypeUtil';
 import standardLibrary from '../stdLibrary/standardLibrary';
-
-export interface MemoryLiteral extends MemoryObjectBase {
-    type: 'literal',
-    value: string | number,
-}
-
-export interface MemoryFunc extends MemoryObjectBase {
-    type: 'func',
-    value: FuncDeclarationNode,
-}
-
-export interface MemoryObjectBase extends MemoryValue {
-    identifier: string,
-    declarationType: 'constant' | 'variable' | 'argument' | 'internal'
-}
-
-export type MemoryValue = {
-    type: 'literal' | 'func' | 'internalFunc'
-    value: string | number | FuncDeclarationNode | InternalFuncDeclarationNode,
-}
+import { MemoryValue, Value } from './types';
 
 export type Scope = {
     subScope: Scope | null,
-    data: Record<string, MemoryObjectBase>
+    data: Record<string, MemoryValue>
 };
 
 export class Memory {
@@ -69,7 +50,7 @@ export class Memory {
      * gets a value from memory
      * @throws error when variable not in memory
      */
-    public get(identifier: string): MemoryObjectBase {
+    public get(identifier: string): MemoryValue {
         const allScopes = this.getAllScopesInOrder().reverse();
         for (const scope of allScopes) {
             const value = scope.data[identifier];
@@ -84,24 +65,41 @@ export class Memory {
         scope.subScope = { data: {}, subScope: null};
     }
 
-    public set(identifier: string, value: MemoryObjectBase) {
+    public set(identifier: string, value: MemoryValue) {
         const scope = this.getActiveScope();
-
         const memorySlot = scope.data[identifier];
         if (memorySlot) throw new Error(`Variable '${identifier}' already exists`);
+
+        const variableType = value.type;
+        const valueType = DataTypeUtil.valueToDataType(value.value.type);
+
+        const isOptionalAndCanBeAssigned = (value.isOptional && valueType === 'nothing');
+        console.log(value.isOptional);
+
+        if (isOptionalAndCanBeAssigned) {
+            scope.data[identifier] = value;
+            return;
+        }
+
+        if (variableType !== valueType) {
+            throw new Error(`Tried to assign '${valueType}' to a '${variableType}'`);
+        }
+
         scope.data[identifier] = value;
     }
 
-    public update(identifier: string, value: MemoryValue) {
+    public update(identifier: string, value: Value) {
         const scope = this.getActiveScope();
 
         const memoryItem = scope.data[identifier];
         if (!memoryItem) throw new Error(`variable '${identifier}' does not exists`);
         if (memoryItem.declarationType === 'constant') throw new Error(`Tried to update constant '${identifier}'`);
         if (memoryItem.declarationType === 'argument') throw new Error(`Tried to update argument '${identifier}'`);
-        if (memoryItem.type !== value.type) throw new Error(`Tried to assign ${value.type} to a ${memoryItem.type}`);
+        const type = DataTypeUtil.valueToDataType(value.type);
+        const isOptionalAndCanBeAssigned = (memoryItem.isOptional && type === 'nothing');
+        if (!isOptionalAndCanBeAssigned && memoryItem.type !== type) throw new Error(`Tried to assign '${type}' to a '${memoryItem.type}'`);
 
-        memoryItem.value = value.value;
+        memoryItem.value = value;
     }
 
     private getAllScopesInOrder() {

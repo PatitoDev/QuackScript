@@ -8,7 +8,7 @@ export type TokenType = 'ASSIGNMENT_OPERATOR' |
 'LESS_THAN' |
 'GREATER_THAN_OR_EQUALS' |
 'LESS_THAN_OR_EQUALS' |
-'TEXT' |
+'TEXT_VALUE' |
 'ADDITION' |
 'SUBTRACTION' |
 'MULTIPLICATION' |
@@ -17,7 +17,8 @@ export type TokenType = 'ASSIGNMENT_OPERATOR' |
 'TERMINATOR' |
 'ASSIGNMENT_LET' |
 'ASSIGNMENT_CONST' |
-'NUMBER' |
+'NUMBER_VALUE' |
+'NUMBER_TYPE' |
 'WHITESPACE' |
 'NEW_LINE' |
 'IDENTIFIER' |
@@ -31,7 +32,7 @@ export type TokenType = 'ASSIGNMENT_OPERATOR' |
 'ASSIGNMENT_OBJECT' |
 'IF' |
 'THEN' |
-'JS_RESERVED_WORD' |
+'JS_RESERVED_WORD' | // TODO - not needed check if we can remove
 'CASE' |
 'CATCH' |
 'CLASS' |
@@ -52,4 +53,16 @@ export type TokenType = 'ASSIGNMENT_OPERATOR' |
 'TYPEOF' |
 'AWAIT' |
 'ASYNC' | 
-'BREAK';
+'BREAK' |
+'BOOLEAN_VALUE' |
+'BOOLEAN_TYPE' |
+'TEXT_TYPE' |
+'NOTHING' | 
+'DOT' |
+'QUESTION' |
+'COLON' | 
+'FUNC' |
+'VECTOR2' |
+'VECTOR3' | 
+'COMMENT_SHORT' |
+'COMMENT_LONG';

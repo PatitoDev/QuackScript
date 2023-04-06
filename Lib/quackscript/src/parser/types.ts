@@ -1,6 +1,12 @@
 
-export type NodeTypes = 'StringLiteral' |
+export type LiteralNodeTypes = 'TextLiteral' |
     'NumberLiteral' |
+    'NothingLiteral' |
+    'Vector2Literal' |
+    'Vector3Literal' |
+    'BooleanLiteral';
+
+export type NodeTypes = LiteralNodeTypes |
     'BinaryExpression' |
     'Expression' |
     'Module' |
@@ -17,7 +23,13 @@ export type NodeTypes = 'StringLiteral' |
     'CodeBlock' |
     'FuncDeclaration' |
     'InternalFuncDeclaration' |
-    'ReturnStatement';
+    'ReturnStatement' |
+    'DataType';
+
+export type DataTypes = 'boolean' | 'text' | 'nothing' |
+    'vector2' | 'vector3' | 'func' | 'list' | 'number';
+
+
 
 export type OperatorTypes = '+' | '-' | '/' | '%' | '*';
 
@@ -26,14 +38,38 @@ export interface Node <T extends NodeTypes = NodeTypes> {
 }
 
 export interface BinaryExpressionNode extends Node<'BinaryExpression'> {
-    left: LiteralNode<string | number> | IdentifierNode,
+    left: LiteralNode | IdentifierNode,
     right: ExpressionNode,
     operator: OperatorTypes
 }
 
-export interface LiteralNode<T = string | number> extends Node<'StringLiteral' | 'NumberLiteral'> {
-    value: T,
-    raw: string
+export type LiteralNode<T extends LiteralNodeTypes = LiteralNodeTypes> = Node<T>;
+
+export type NothingLiteralNode = LiteralNode<'NothingLiteral'>;
+
+export interface BooleanLiteralNode extends LiteralNode<'BooleanLiteral'> {
+    value: boolean
+}
+
+export interface NumberLiteralNode extends LiteralNode<'NumberLiteral'> {
+    value: number
+}
+
+export interface TextLiteralNode extends LiteralNode<'TextLiteral'> {
+    value: string
+}
+
+export interface Vector2LiteralNode extends LiteralNode<'Vector2Literal'> {
+    x: NumberLiteralNode,
+    y: NumberLiteralNode
+}
+
+export interface Vector3LiteralNode extends Vector2LiteralNode {
+    z: NumberLiteralNode,
+}
+
+export interface DataTypeNode extends Node<'DataType'> {
+    value: DataTypes,
 }
 
 export interface TerminatorNode extends Node<'Terminator'> {
@@ -59,6 +95,8 @@ export interface AssignmentNode extends Node<'Assignment'> {
 
 export interface DeclarationNode extends Node<'Declaration'> {
     declaratorType: 'constant' | 'variable',
+    isOptional: boolean,
+    dataType: DataTypeNode | null,
     assignmentNode: AssignmentNode,
 }
 

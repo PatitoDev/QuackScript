@@ -1,0 +1,10 @@
+{
+  "logo.alt": {
+    "message": "The JS killer",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

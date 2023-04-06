@@ -3,9 +3,12 @@ import CodeEditor from '../../molecules/CodeEditor';
 import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser } from 'quackscript';
+import { BooleanLiteralNode, LiteralNode, NumberLiteralNode, TextLiteralNode } from 'quackscript/src/parser/types';
 
 const defaultQuackTextValue = `QUACK exampleFunction <- (:value:) :> {: return value🦆:}🦆
-QUACK test <- 'hello world'🦆
+
+quack optionalVariableTest?:text🦆
+optionalVariableTest <- 'hello world'🦆
 
 exampleFunction(:'this is quackscript':)🦆
 exampleFunction(:'in action':)🦆
@@ -15,7 +18,7 @@ QUACK add <- (:first, second:) :> {:
 :}🦆
 
 add(:5, 8:)🦆
-quackprint(:'hello world':)🦆
+quackprint(:optionalVariableTest:)🦆
 `;
 
 const lexer = new Lexer();
@@ -34,9 +37,23 @@ const QuackScriptEditor = () => {
 
     useEffect(() => {
         setInterpreter(new Interpreter((value) => {
-            setCodeOutcome((pre) => (
-                pre.length ?  pre + '\n' + `${value.value}` : `${value.value}`
-            ));
+            setCodeOutcome((pre) => {
+                let valueToPrint = '';
+                switch (value.type) {
+                case 'BooleanLiteral':
+                    valueToPrint = (value as BooleanLiteralNode).value.toString();
+                    break;
+                case 'TextLiteral':
+                    valueToPrint = (value as TextLiteralNode).value;
+                    break;
+                case 'NumberLiteral':
+                    valueToPrint = `${(value as NumberLiteralNode).value}`;
+                    break;
+                case 'NothingLiteral':
+                    valueToPrint = 'nothing';
+                }
+                return pre.length ?  pre + '\n' + `${valueToPrint}` : `${valueToPrint}`;
+            });
         }));
     }, []);
 

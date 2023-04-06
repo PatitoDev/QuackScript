@@ -67,6 +67,10 @@ export default class Lexer {
         const regexToExecute = tokenMap[token];
         if (regexToExecute) {
             const result = this.extractTokenWithRegex(data, regexToExecute);
+            if (token === 'TEXT_VALUE' && result?.matchedValue) {
+                // TODO - find a better way of doing this
+                result.matchedValue = result.matchedValue.replace(/'/g, '');
+            }
             if (result) {
                 return {
                     token,

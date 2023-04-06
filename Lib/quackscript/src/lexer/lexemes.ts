@@ -1,6 +1,7 @@
-type ConditionalsLexemes = 'AND' |
-    'OR' |
-    'EQUALS' |
+type LogicalOperatorLexemes = 'AND' |
+    'OR';
+
+type ComparisonOperatorLexemes = 'EQUALS' |
     'NOT_EQUALS' |
     'GREATER_THAN' |
     'LESS_THAN' |
@@ -24,7 +25,9 @@ type DataTypeLexemes = 'NOTHING' |
     'VECTOR2' |
     'VECTOR3';
 
-export type Lexemes = ConditionalsLexemes |
+
+export type Lexemes = LogicalOperatorLexemes |
+    ComparisonOperatorLexemes |
     MathematicalLexemes |
     DataTypeLexemes |
     'ASSIGNMENT_OPERATOR' |

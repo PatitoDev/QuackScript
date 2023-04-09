@@ -5,7 +5,7 @@ slug: /
 
 # Quackscript 
 
-:::cuidado En Desarrollo
+:::danger En Desarrollo
 QuackScript aún está en desarrollo, así que las cosas **cambiarán**
 :::
 

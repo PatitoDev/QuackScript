@@ -1,96 +1,106 @@
 import { DataTypeUtil } from '../dataTypes/dataTypeUtil';
+import { ControlFlowException } from '../exception/ControlFlowException';
+import { RuntimeException } from '../exception/RuntimeException';
+import Lexer from '../lexer';
+import Parser from '../parser';
 import { 
     AssignmentNode, BinaryExpressionNode, BooleanLiteralNode, CodeBlockNode, DeclarationNode, ExpressionNode,
     FuncCallNode, FuncDeclarationNode, GenericFuncDeclarationNode, IdentifierNode,
     IfStatementNode,
+    ImportStatementNode,
     InternalFuncDeclarationNode, ModuleNode, NothingLiteralNode, NumberLiteralNode, ReturnStatementNode,
     StatementNode, 
     TextLiteralNode} from '../parser/types';
 import { executeInternalFunc } from '../stdLibrary/standardLibrary';
+import { System } from '../system';
 import { Memory } from './memory';
+import { State } from './state';
 import { Value } from './types';
 
 // TODO - make a stdout to output
-
-
-type StateType = 'topLevel' | 'function' | 'while' | 'for';
-
-// TODO - fix issue with nested function returns
-export class State {
-    private _stateStack: Array<StateType>;
-
-    constructor(){
-        this._stateStack = ['topLevel'];
-    }
-
-    public push(state: Exclude<StateType, 'topLevel'>){
-        this._stateStack.push(state);
-    }
-
-    public pop(){
-        return this._stateStack.pop();
-    }
-
-    public getCurrentState(){
-        const currentState = this._stateStack[this._stateStack.length - 1];
-        if (!currentState) throw new Error('Internal state error');
-        return currentState;
-    }
-
-    public popToTopLevel(){
-        this._stateStack = ['topLevel'];
-    }
-}
-
 export default class Interpreter {
 
     public _memory;
-    private _stdOut: (outcome: Value) => void;
+    private _parser: Parser;
+    private _lexer: Lexer;
+    private _system: System;
     private _state: State;
+    private _code: string | null = null;
 
-    public constructor(stdout?: (outcome: Value) => void){
+    public constructor(
+        stdout?:System['stdout'],
+        stderr?:System['stderr'],
+        loadFile?: System['loadFile']
+    ){
         this._state = new State();
         this._memory = new Memory();
-        if (stdout) {
-            this._stdOut = stdout;
-        } else {
-            this._stdOut = console.log;
-        }
+        this._system = new System(stdout, stderr, loadFile);
+        this._lexer = new Lexer();
+        this._parser = new Parser();
     }
 
-    public execute(tree: ModuleNode) {
+    public execute(tree: ModuleNode, code?: string) {
         this._memory.clearMemory();
-        for (const statement of tree.statements){
-            const output = this.executeStatement(statement);
-            if (output !== null && output.type !== 'NothingLiteral'){
-                this._stdOut(output);
+        this._code = code ?? null;
+        try {
+            this.executeModule(tree);
+        } catch (er) {
+            if (er instanceof RuntimeException) {
+                this._system.stderr(er.toString());
+                return;
             }
+            throw er;
         }
         this._memory.printMemory();
     }
 
-    // TODO - check redundancy
-    public executeBlock(block: CodeBlockNode) {
-        for (const statement of block.body) {
-            const outcome = this.executeStatement(statement);
-            if (statement.body.type === 'ReturnStatement') {
-                if (this._state.getCurrentState() !== 'function'){
-                    throw new Error('Tried to return outside a function');
-                }
-                return outcome;
+    public executeModule(moduleNode: ModuleNode): null {
+        const modulesImported = this.executeAllTopImports(moduleNode);
+        console.log(modulesImported);
+        const importedModulesCounts = modulesImported.length;
+        const statementsToExecute = moduleNode.statements.splice(importedModulesCounts);
+        console.log(statementsToExecute);
+
+        for (const statement of statementsToExecute) {
+            const output = this.executeStatement(statement);
+            if (output !== null && output.type !== 'NothingLiteral'){
+                // TODO - parse to string output
+                this._system.stdout(JSON.stringify(output));
             }
         }
+
         return null;
     }
 
-    public executeStatements(statements: Array<StatementNode>) {
-        for (const statement of statements) {
+    /**
+     * Executes all the import statements until if find a non import statement
+     */
+    public executeAllTopImports(moduleNode: ModuleNode): Array<ImportStatementNode>{
+        const importedModules:Array<ImportStatementNode> = [];
+
+        for (const statement of moduleNode.statements) {
+            if (statement.body.type !== 'ImportStatement') {
+                return importedModules;
+            }
+            this.executeImportNode(statement.body as ImportStatementNode);
+            importedModules.push(statement.body as ImportStatementNode);
+        }
+
+        return importedModules;
+    }
+
+    public executeImportNode(importNode: ImportStatementNode) {
+        const moduleCode = this._system.loadFile(importNode.value.value);
+        const tokens = this._lexer.convertToTokens(moduleCode);
+        const tree = this._parser.parse(tokens);
+        this.executeModule(tree);
+    }
+
+    public executeCodeBlock(block: CodeBlockNode) {
+        for (const statement of block.body) {
             const outcome = this.executeStatement(statement);
             if (statement.body.type === 'ReturnStatement') {
-                if (this._state.getCurrentState() !== 'function') {
-                    throw new Error('Tried to return outside a function');
-                }
-                return outcome;
+                throw new ControlFlowException('Return', outcome);
             }
         }
         return null;
@@ -111,6 +121,8 @@ export default class Interpreter {
         case 'IfStatement':
             this.executeIfStatementNode(statement.body as IfStatementNode);
             return null;
+        case 'ImportStatement':
+            throw new RuntimeException(statement.position, 'Import statements must be at the top of the file', this._code);
         }
     }
 
@@ -130,13 +142,13 @@ export default class Interpreter {
         case 'TextLiteral':
         case 'Vector2Literal':
         case 'Vector3Literal':
-            throw new Error('Invalid boolean expression');
+            throw new RuntimeException(node.position, 'Invalid boolean expression', this._code);
         }
 
         if (isConditionTrue) {
-            this.executeBlock(node.trueExpression);
+            this.executeCodeBlock(node.trueExpression);
         } else if (node.falseExpression !== null) {
-            this.executeBlock(node.falseExpression);
+            this.executeCodeBlock(node.falseExpression);
         }
 
         return null;
@@ -184,11 +196,11 @@ export default class Interpreter {
         const id = node.identifier.value;
         const memoryValue = this._memory.get(id);
         if (memoryValue.type !== 'func' && memoryValue.type !== 'internalFunc'){
-            throw new Error(`tried to call variable '${id}' as a function`);
+            throw new RuntimeException(node.position, `Tried to call variable '${id}' as a function`, this._code);
         }
 
         if (memoryValue.value.type === 'NothingLiteral') {
-            throw new Error('tried to call \'nothing\' as a function');
+            throw new RuntimeException(node.position, 'Tried to call \'nothing\' as a function', this._code);
         }
 
         const fn = (memoryValue.value as GenericFuncDeclarationNode);
@@ -198,7 +210,7 @@ export default class Interpreter {
         const params = fn.parameters?.params ?? [];
         const args = node.params?.args ?? [];
         if (params.length !== args.length) {
-            throw new Error(`Expecting ${params.length} arguments but got ${args.length} arguments`);
+            throw new RuntimeException(node.position, `Expecting ${params.length} arguments but got ${args.length} arguments`, this._code);
         }
         params.forEach((param, i) => {
             const arg = args[i];
@@ -215,17 +227,22 @@ export default class Interpreter {
             });
         });
 
-        let returnedValue: Value | null = null;
-        if (memoryValue.type === 'internalFunc'){
-            returnedValue = executeInternalFunc(fn as InternalFuncDeclarationNode, this._memory, this._stdOut);
-        } else {
-            returnedValue = this.executeStatements((fn as FuncDeclarationNode).body.body);
-        }
+        let returnedValue: Value = {
+            type: 'NothingLiteral'
+        } as NothingLiteralNode;
 
-        if (returnedValue === null) {
-            returnedValue = {
-                type: 'NothingLiteral'
-            } as NothingLiteralNode;
+        if (memoryValue.type === 'internalFunc'){
+            returnedValue = executeInternalFunc(fn as InternalFuncDeclarationNode, this._memory, this._system);
+        } else {
+            try {
+                this.executeCodeBlock((fn as FuncDeclarationNode).body);
+            } catch (ex:unknown) {
+                if (ex instanceof ControlFlowException && ex.type === 'Return'){
+                    returnedValue = ex.data;
+                } else {
+                    throw ex;
+                }
+            }
         }
 
         this._memory.clearScope();
@@ -262,18 +279,19 @@ export default class Interpreter {
             rightValue.type === 'FuncDeclaration' ||
             rightValue.type === 'InternalFuncDeclaration'
         ) {
-            throw new Error('Invalid binary expression');
+            throw new RuntimeException(node.position, 'Invalid binary expression', this._code);
         }
 
         let leftValueUnwrapped: Value = { 
-            type: 'NothingLiteral'
+            type: 'NothingLiteral',
+            position: node.left.position
         };
 
         if (node.left.type === 'Identifier') {
             const valueFromMemory = this._memory.get(node.left.value);
             if (valueFromMemory.type === 'func' ||
                 valueFromMemory.type === 'internalFunc') {
-                throw new Error('Invalid binary expression');
+                throw new RuntimeException(node.position, 'Invalid binary expression', this._code);
             }
             leftValueUnwrapped = valueFromMemory.value;
         } else {
@@ -302,11 +320,12 @@ export default class Interpreter {
             }
 
             if (finalValue === null) {
-                throw new Error('Unable to parse binary expression');
+                throw new RuntimeException(node.position, 'Unable to parse binary expression', this._code);
             }
             return {
                 type: 'BooleanLiteral',
-                value: finalValue
+                value: finalValue,
+                position: left.position
             } as BooleanLiteralNode;
         }
 
@@ -354,14 +373,16 @@ export default class Interpreter {
             if (typeof finalValue === 'boolean') {
                 return {
                     type: 'BooleanLiteral',
-                    value: finalValue
+                    value: finalValue,
+                    position: left.position
                 } as BooleanLiteralNode;
             }
 
             if (typeof finalValue === 'number') {
                 return {
                     type: 'NumberLiteral',
-                    value: finalValue
+                    value: finalValue,
+                    position: left.position
                 } as NumberLiteralNode;
             }
         }
@@ -386,14 +407,16 @@ export default class Interpreter {
             if (typeof finalValue === 'string') {
                 return {
                     type: 'TextLiteral',
-                    value: finalValue
+                    value: finalValue,
+                    position: left.position
                 } as TextLiteralNode;
             }
-        
+
             if (typeof finalValue === 'boolean') {
                 return {
                     type: 'BooleanLiteral',
-                    value: finalValue
+                    value: finalValue,
+                    position: left.position
                 } as BooleanLiteralNode;
             }
         }
@@ -405,13 +428,12 @@ export default class Interpreter {
         ){
             return {
                 type: 'BooleanLiteral',
-                value: node.operator === '!='
+                value: node.operator === '!=',
+                position: node.position
             } as BooleanLiteralNode;
         }
 
         // TODO - implement vectors
-
-        throw new Error('Unable to parse binary expression');
+        throw new RuntimeException(node.left.position, 'Unable to parse binary expression', this._code);
     };
-
 }

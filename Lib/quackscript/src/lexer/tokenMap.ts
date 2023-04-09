@@ -1,4 +1,4 @@
-import { Lexemes } from './lexemes';
+import { Lexemes } from '../types/Lexemes';
 
 export const tokenMap: Record<Lexemes, RegExp> = {
     'COMMENT_SHORT': /^\/\/.*?\n/,
@@ -86,6 +86,8 @@ export const tokenMap: Record<Lexemes, RegExp> = {
     'VECTOR3': /^vector3(?=[^a-zA-Z0-9]|$)/,
 
     'FUNC_TYPE': /^func(?=[^a-zA-Z0-9]|$)/,
+
+    'IMPORT': /^import(?=[^a-zA-Z0-9]|$)/,
 
     'DOT': /^\./,
 

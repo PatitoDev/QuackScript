@@ -1,22 +1,34 @@
 import { InternalFuncDeclarationNode } from '../parser/types';
 import { Memory } from '../interpreter/memory';
 import { MemoryValue, Value } from '../interpreter/types';
+import { Position } from '../types/Position';
+import { System } from '../system';
+
+const fakePosition:Position = {
+    char: 0,
+    line: 0,
+    start: 0
+};
 
 export const executeInternalFunc = (node: InternalFuncDeclarationNode,
     memory: Memory,
-    stdOut: (outcome: Value) => void): Value | null => {
+    system: System): Value => {
     switch (node.identifier){
     case 'quackprint':
-        return execQuackPrint(memory, stdOut);
+        return execQuackPrint(memory, system);
     }
 
-    return null;
+    return { 
+        type: 'NothingLiteral',
+        position: fakePosition
+    };
 };
 
-const execQuackPrint = (memory: Memory, stdOut: (outcome:Value) => void): Value | null => {
+const execQuackPrint = (memory: Memory, system: System): Value => {
     const value = memory.get('value');
-    stdOut(value.value);
-    return null;
+    // TODO - add helper to parse to string
+    system.stdout(value.value.type);
+    return { type: 'NothingLiteral', position: fakePosition };
 };
 
 const _standardLibrary: Array<{

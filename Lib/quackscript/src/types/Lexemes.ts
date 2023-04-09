@@ -25,11 +25,11 @@ type DataTypeLexemes = 'NOTHING' |
     'VECTOR2' |
     'VECTOR3';
 
-
 export type Lexemes = LogicalOperatorLexemes |
     ComparisonOperatorLexemes |
     MathematicalLexemes |
     DataTypeLexemes |
+    'IMPORT' |
     'ASSIGNMENT_OPERATOR' |
     'ARROW_FUNCTION' |
     'TERMINATOR' |

@@ -1,4 +1,4 @@
-import { Token } from '../lexer';
+import { Token } from '../types/Token';
 
 export class Cursor {
     private _position: number;

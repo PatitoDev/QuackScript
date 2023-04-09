@@ -11,7 +11,7 @@ export class Memory {
 
     private _memory: Scope;
 
-    constructor (){
+    constructor () {
         this._memory = { subScope: null, data: {
             ...standardLibrary
         } };
@@ -74,7 +74,6 @@ export class Memory {
         const valueType = DataTypeUtil.valueToDataType(value.value.type);
 
         const isOptionalAndCanBeAssigned = (value.isOptional && valueType === 'nothing');
-        console.log(value.isOptional);
 
         if (isOptionalAndCanBeAssigned) {
             scope.data[identifier] = value;

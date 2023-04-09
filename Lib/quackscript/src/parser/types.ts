@@ -1,3 +1,5 @@
+import { Position } from '../types/Position';
+
 export type LiteralNodeTypes = 'TextLiteral' |
     'NumberLiteral' |
     'NothingLiteral' |
@@ -6,6 +8,7 @@ export type LiteralNodeTypes = 'TextLiteral' |
     'BooleanLiteral';
 
 export type NodeTypes = LiteralNodeTypes |
+    'ImportStatement' | 
     'IfStatement' |
     'BinaryExpression' |
     'Expression' |
@@ -35,7 +38,8 @@ export type LogicalOperatorTypes = '&&' | '||';
 export type OperatorTypes = MathematicalOperatorTypes | ComparisonOperatorTypes | LogicalOperatorTypes;
 
 export interface Node <T extends NodeTypes = NodeTypes> {
-    type: T
+    type: T,
+    position: Position
 }
 
 export interface BinaryExpressionNode extends Node<'BinaryExpression'> {
@@ -102,7 +106,7 @@ export interface DeclarationNode extends Node<'Declaration'> {
 }
 
 export interface StatementNode extends Node<'Statement'> {
-    body: DeclarationNode | AssignmentNode | ExpressionNode | ReturnStatementNode | IfStatementNode
+    body: DeclarationNode | AssignmentNode | ExpressionNode | ReturnStatementNode | IfStatementNode | ImportStatementNode
 }
 
 export interface ModuleNode extends Node<'Module'> {
@@ -150,4 +154,8 @@ export interface IfStatementNode extends Node<'IfStatement'> {
     condition: ExpressionNode,
     trueExpression: CodeBlockNode,
     falseExpression: CodeBlockNode | null
+}
+
+export interface ImportStatementNode extends Node<'ImportStatement'> {
+    value: TextLiteralNode
 }

@@ -1,21 +1,13 @@
-import { Lexemes } from './lexemes';
+import { Lexemes } from '../types/Lexemes';
+import { Token } from '../types/Token';
 import { tokenMap } from './tokenMap';
 
-export interface Token {
-    value: string,
-    placement: {
-        start: number,
-        line: number,
-        char: number
-    }
-    type: Lexemes,
-}
 
 export default class Lexer {
 
     public convertToTokens = (code: string) => {
         const generatedTokens:Array<Token> = [];
-    
+
         let nextData = code;
         let hasMoreToParse = true;
         let cursor = 0;
@@ -35,7 +27,7 @@ export default class Lexer {
                     generatedTokens.push({
                         type: result.token,
                         value: result.value,
-                        placement: {
+                        position: {
                             start: cursor,
                             char: currentCharacter,
                             line: currentLine,

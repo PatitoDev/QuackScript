@@ -21,6 +21,14 @@ add(:5, 8:)🦆
 quackprint(:optionalVariableTest:)🦆
 `;
 
+
+const loadFile = (value: string) => {
+    if (value === './index.quack'){
+        return 'QUACK add <- (:a,b:) :> {:return a + b🦆:}🦆';
+    }
+    throw new Error('file not found');
+};
+
 const lexer = new Lexer();
 const parser = new Parser();
 
@@ -36,25 +44,13 @@ const QuackScriptEditor = () => {
     };
 
     useEffect(() => {
-        setInterpreter(new Interpreter((value) => {
+        const handleOutput = (value:string) => {
             setCodeOutcome((pre) => {
-                let valueToPrint = '';
-                switch (value.type) {
-                case 'BooleanLiteral':
-                    valueToPrint = (value as BooleanLiteralNode).value.toString();
-                    break;
-                case 'TextLiteral':
-                    valueToPrint = (value as TextLiteralNode).value;
-                    break;
-                case 'NumberLiteral':
-                    valueToPrint = `${(value as NumberLiteralNode).value}`;
-                    break;
-                case 'NothingLiteral':
-                    valueToPrint = 'nothing';
-                }
-                return pre.length ?  pre + '\n' + `${valueToPrint}` : `${valueToPrint}`;
+                return pre.length ?  pre + '\n' + `${value}` : `${value}`;
             });
-        }));
+        };
+
+        setInterpreter(new Interpreter(handleOutput, handleOutput, loadFile));
     }, []);
 
     useEffect(() => {
@@ -63,7 +59,7 @@ const QuackScriptEditor = () => {
             const tokens = lexer.convertToTokens(quackCode);
             const parsedOutcome = parser.parse(tokens);
             console.log('tree: ', parsedOutcome);
-            interpreter.execute(parsedOutcome);
+            interpreter.execute(parsedOutcome, quackCode);
         } catch (e) {
             console.error(e);
             setCodeOutcome((e as Error).message);

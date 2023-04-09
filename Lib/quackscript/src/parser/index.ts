@@ -1,4 +1,4 @@
-import { Token } from '../lexer';
+import { Token } from '../types/Token';
 import { Cursor } from './cursor';
 import { 
     AssignmentNode, AssignmentOperatorNode, BinaryExpressionNode, 
@@ -6,10 +6,29 @@ import {
     FuncCallNode,
     IdentifierNode, LiteralNode, ModuleNode,
     ArgsNode,
-    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode, NumberLiteralNode, TextLiteralNode, BooleanLiteralNode, NothingLiteralNode, DataTypeNode, MathematicalOperatorTypes, IfStatementNode } from './types';
+    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode, NumberLiteralNode, TextLiteralNode, BooleanLiteralNode, NothingLiteralNode, DataTypeNode, MathematicalOperatorTypes, IfStatementNode, ImportStatementNode } from './types';
 
 
 export default class Parser {
+
+    /*
+        <import-statement> := <import> <text-literal> <terminator>
+    */
+    private importStatement = (): ImportStatementNode | null => {
+        const token = this._cursor.readCurrentToken();
+        if (token?.type !== 'IMPORT') return null;
+        this._cursor.advanceCursor(1);
+        const literalNode = this.literal();
+        if (literalNode?.type !== 'TextLiteral') {
+            throw new Error('Expected file to import');
+        }
+
+        return {
+            type: 'ImportStatement',
+            position: token.position,
+            value: literalNode as TextLiteralNode
+        };
+    };
 
     /*
         can be replaced with just literal
@@ -30,6 +49,7 @@ export default class Parser {
             const result: TerminatorNode = {
                 type: 'Terminator',
                 value: '🦆',
+                position: token.position
             };
             return result;
         }
@@ -45,18 +65,22 @@ export default class Parser {
 
         if (token.type === 'NUMBER_VALUE'){
             this._cursor.advanceCursor(1);
-            return {
+            const value:NumberLiteralNode = {
                 type: 'NumberLiteral',
-                value: Number(token.value)
-            } as NumberLiteralNode;
+                value: Number(token.value),
+                position: token.position,
+            };
+            return value;
         }
 
         if (token.type === 'TEXT_VALUE'){
             this._cursor.advanceCursor(1);
-            return {
+            const value:TextLiteralNode = {
                 type: 'TextLiteral',
-                value: token.value
-            } as TextLiteralNode;
+                value: token.value,
+                position: token.position
+            };
+            return value;
         }
 
         if (token.type === 'BOOLEAN_VALUE'){
@@ -67,17 +91,21 @@ export default class Parser {
                 throw new Error('Internal error');
             }
             const value = token.value === 'true';
-            return {
+            const literalValue:BooleanLiteralNode = {
                 type: 'BooleanLiteral',
-                value: value 
-            } as BooleanLiteralNode;
+                value: value,
+                position: token.position
+            };
+            return literalValue;
         }
 
         if (token.type === 'NOTHING'){
             this._cursor.advanceCursor(1);
-            return {
-                type: 'NothingLiteral'
-            } as NothingLiteralNode;
+            const value: NothingLiteralNode = {
+                type: 'NothingLiteral',
+                position: token.position
+            };
+            return value;
         }
 
         // TODO - add vector literals
@@ -94,7 +122,8 @@ export default class Parser {
         if (!token || token.type !== 'IDENTIFIER') return null;
         const node:IdentifierNode = {
             type: 'Identifier',
-            value: token.value
+            value: token.value,
+            position: token.position
         };
         this._cursor.advanceCursor(1);
         return node;
@@ -144,6 +173,7 @@ export default class Parser {
         const paramNode:ArgsNode = {
             type: 'Args',
             args: [expressionNode],
+            position: firstNode.position
         };
 
         const commaToken = this._cursor.readCurrentToken();
@@ -182,7 +212,8 @@ export default class Parser {
     
         return {
             body,
-            type: 'CodeBlock'
+            type: 'CodeBlock',
+            position: leftBracket.position
         };
     };
 
@@ -196,11 +227,13 @@ export default class Parser {
         const identifierNode:IdentifierNode = {
             type: 'Identifier',
             value: id.value,
+            position: id.position
         };
 
         const paramNode:ParamsNode = {
             params: [identifierNode],
-            type: 'Params'
+            type: 'Params',
+            position: id.position
         };
         this._cursor.advanceCursor(1);
 
@@ -246,7 +279,8 @@ export default class Parser {
         return {
             parameters: params,
             body: codeBlock,
-            type: 'FuncDeclaration'
+            type: 'FuncDeclaration',
+            position: currentToken.position
         };
     };
 
@@ -280,7 +314,8 @@ export default class Parser {
         return {
             identifier: identifierNode,
             params: params,
-            type: 'FuncCallNode'
+            type: 'FuncCallNode',
+            position: firstNode.position
         };
     };
 
@@ -308,7 +343,8 @@ export default class Parser {
             left: parsedFirstToken,
             right: parsedThirdToken,
             operator: parsedSecondToken,
-            type: 'BinaryExpression'
+            type: 'BinaryExpression',
+            position: firstToken.position
         };
         
         return expression;
@@ -322,7 +358,8 @@ export default class Parser {
         if (parsedBinaryExpression) {
             return {
                 type: 'Expression',
-                body: parsedBinaryExpression
+                body: parsedBinaryExpression,
+                position: parsedBinaryExpression.position,
             };
         }
 
@@ -330,7 +367,8 @@ export default class Parser {
         if (funcCallNode) {
             return {
                 body: funcCallNode,
-                type: 'Expression'
+                type: 'Expression',
+                position: funcCallNode.position
             };
         }
 
@@ -338,7 +376,8 @@ export default class Parser {
         if (funcDeclaration) {
             return {
                 body: funcDeclaration,
-                type: 'Expression'
+                type: 'Expression',
+                position: funcDeclaration.position
             };
         }
 
@@ -346,7 +385,8 @@ export default class Parser {
         if (parsedIdentifier) {
             return {
                 body: parsedIdentifier,
-                type: 'Expression'
+                type: 'Expression',
+                position: parsedIdentifier.position
             };
         }
 
@@ -354,7 +394,8 @@ export default class Parser {
         if (parsedLiteral) {
             return {
                 body: parsedLiteral,
-                type: 'Expression'
+                type: 'Expression',
+                position: parsedLiteral.position
             };
         }
 
@@ -370,7 +411,8 @@ export default class Parser {
         this._cursor.advanceCursor(1);
         const node:AssignmentOperatorNode = {
             type: 'AssignmentOperator',
-            value: token.value
+            value: token.value,
+            position: token.position
         };
         return node;
     };
@@ -402,7 +444,8 @@ export default class Parser {
         return {
             expression: assignmentBody,
             identifier: identifierNode,
-            type: 'Assignment'
+            type: 'Assignment',
+            position: currentToken.position
         };
     };
 
@@ -416,42 +459,50 @@ export default class Parser {
         case 'TEXT_TYPE':
             return {
                 type: 'DataType',
-                value: 'text'
+                value: 'text',
+                position: token.position
             };
         case 'NUMBER_TYPE':
             return {
                 type: 'DataType',
-                value: 'number'
+                value: 'number',
+                position: token.position
             };
         case 'BOOLEAN_TYPE':
             return {
                 type: 'DataType',
-                value: 'boolean'
+                value: 'boolean',
+                position: token.position
             };
         case 'NOTHING':
             return {
                 type: 'DataType',
-                value: 'nothing'
+                value: 'nothing',
+                position: token.position
             };
         case 'ARROW_FUNCTION':
             return {
                 type: 'DataType',
-                value: 'func'
+                value: 'func',
+                position: token.position
             };
         case 'FUNC_TYPE':
             return {
                 type : 'DataType',
-                value: 'func'
+                value: 'func',
+                position: token.position
             };
         case 'VECTOR2':
             return {
                 type : 'DataType',
-                value: 'vector2'
+                value: 'vector2',
+                position: token.position
             };
         case 'VECTOR3':
             return {
                 type : 'DataType',
-                value: 'vector3'
+                value: 'vector3',
+                position: token.position
             };
         }
         throw new Error(`Expected data type but found ${this._cursor.readCurrentToken()?.value}`);
@@ -492,8 +543,10 @@ export default class Parser {
                 type: 'Expression',
                 body: {
                     type: 'NothingLiteral'
-                } as NothingLiteralNode
+                } as NothingLiteralNode,
+                position: token.position
             },
+            position: token.position
         };
 
         // this node can only be <question> | <colon> | <assignment-operator>
@@ -504,7 +557,8 @@ export default class Parser {
             type: 'Declaration',
             assignmentNode: assignment,
             isOptional: false,
-            dataType: null
+            dataType: null,
+            position: assignment.position
         };
 
         if (declarationExtras) {
@@ -571,7 +625,8 @@ export default class Parser {
             condition: expression,
             type: 'IfStatement',
             trueExpression: codeBlock,
-            falseExpression: null
+            falseExpression: null,
+            position: token.position
         };
 
         const possibleElseNode = this._cursor.readCurrentToken();
@@ -602,7 +657,8 @@ export default class Parser {
         if (terminatorNode?.type !== 'TERMINATOR') throw new Error(`Expecting 🦆 but found ${this._cursor.readCurrentToken()?.value}`);
         return {
             type: 'ReturnStatement',
-            value: expressionNode
+            value: expressionNode,
+            position: token.position
         };
     };
 
@@ -619,7 +675,8 @@ export default class Parser {
         if (declaration) {
             generatedNode = {
                 body: declaration,
-                type: 'Statement'
+                type: 'Statement',
+                position: firstToken.position
             };
         }
 
@@ -628,7 +685,8 @@ export default class Parser {
             if (ifStatement) {
                 generatedNode = {
                     body: ifStatement,
-                    type: 'Statement'
+                    type: 'Statement',
+                    position: firstToken.position
                 };
             }
         }
@@ -638,7 +696,8 @@ export default class Parser {
             if (assignment) {
                 generatedNode = {
                     body: assignment,
-                    type: 'Statement'
+                    type: 'Statement',
+                    position: firstToken.position
                 };
             }
         }
@@ -648,7 +707,8 @@ export default class Parser {
             if (expression) {
                 generatedNode = {
                     body: expression,
-                    type: 'Statement'
+                    type: 'Statement',
+                    position: firstToken.position
                 };
             }
         }
@@ -659,7 +719,19 @@ export default class Parser {
             if (returnStatement) {
                 generatedNode = {
                     body: returnStatement,
-                    type: 'Statement'
+                    type: 'Statement',
+                    position: firstToken.position
+                };
+            }
+        }
+
+        if (!generatedNode) {
+            const importStatement = this.importStatement();
+            if (importStatement) {
+                generatedNode = {
+                    body: importStatement,
+                    type: 'Statement',
+                    position: firstToken.position
                 };
             }
         }
@@ -687,6 +759,11 @@ export default class Parser {
         const module:ModuleNode = {
             type: 'Module',
             statements: [],
+            position: {
+                char: 0,
+                line: 0,
+                start: 0,
+            }
         };
 
         let hasError = false;

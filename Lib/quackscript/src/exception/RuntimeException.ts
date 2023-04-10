@@ -15,7 +15,7 @@ export class RuntimeException {
     }
 
     toString() {
-        let msg = `Error: In line ${this.position.line} at char ${this.position.char}\n  ${this.message}`;
+        let msg = `Runtime Error: In line ${this.position.line} at char ${this.position.char}\n  ${this.message}`;
 
         if (this.code !== null) {
             console.log(this.position);

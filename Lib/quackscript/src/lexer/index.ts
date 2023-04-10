@@ -1,66 +1,78 @@
+import { SyntaxException } from '../exception/SyntaxException';
 import { Lexemes } from '../types/Lexemes';
+import { Position } from '../types/Position';
 import { Token } from '../types/Token';
 import { tokenMap } from './tokenMap';
 
 
 export default class Lexer {
+    private _position: Position;
+    private _tokens: Array<Token>;
 
-    public convertToTokens = (code: string) => {
-        const generatedTokens:Array<Token> = [];
+    constructor() {
+        this._position = {
+            char: 0,
+            line: 0,
+            start: 0 // cursor
+        };
+        this._tokens = [];
+    }
 
-        let nextData = code;
-        let hasMoreToParse = true;
-        let cursor = 0;
-        let currentLine = 1;
-        let currentCharacter = 0;
+    public convertToTokens(code: string): Array<Token> {
+        this._tokens = [];
+        this._position = {
+            char: 0,
+            line: 0,
+            start: 0
+        };
 
-        while(hasMoreToParse) {
-            if (nextData.length == 0) {
-                break;
-            }
+        const tokenKeys = Object.keys(tokenMap);
+        let codeToInspect = code;
 
-            hasMoreToParse = false;
+        if (code.trim().length === 0) return [];
 
-            for (const tokenType of Object.keys(tokenMap)) {
-                const result = this.parseToken(nextData, tokenType as Lexemes);
-                if (result) {
-                    generatedTokens.push({
-                        type: result.token,
-                        value: result.value,
-                        position: {
-                            start: cursor,
-                            char: currentCharacter,
-                            line: currentLine,
+        tokenLoop:while (codeToInspect.length) {
+            try {
+                for (const tokenKey of tokenKeys) {
+                    const result = this.parseToken(codeToInspect, tokenKey as Lexemes);
+                    if (result) {
+                        this._tokens.push({
+                            type: result.token,
+                            value: result.value,
+                            position: { ...this._position },
+                        });
+                        this._position.char += result.value.length;
+
+                        if (result.token === 'NEW_LINE') {
+                            this._position.char = 0;
+                            this._position.line += 1;
                         }
-                    });
-                    cursor += result.value.length;
-                    currentCharacter += result.value.length;
 
-                    if (result.token === 'NEW_LINE') {
-                        currentCharacter = 0;
-                        currentLine += 1;
+                        codeToInspect = result.splicedCode;
+                        continue tokenLoop;
                     }
-
-                    nextData = result.splicedCode;
-                    hasMoreToParse = true;
-                    break;
                 }
-            }
 
-            if (!hasMoreToParse) {
-                throw new Error(`Invalid character found at line: ${currentLine} char: ${currentCharacter}`);
+                // TODO - ignore character and carry on
+                throw new SyntaxException(this._position, `Invalid character ${codeToInspect[0]}`);
+            } catch (err) {
+                // TODO - handle error gracefully
+                if (err instanceof SyntaxException) {
+                    throw new Error(err.toString());
+                } else {
+                    throw err;
+                }
             }
         }
 
-        return generatedTokens;
-    };
+        return this._tokens;
+    }
 
     private parseToken = (data: string, token: Lexemes) => {
         const regexToExecute = tokenMap[token];
         if (regexToExecute) {
             const result = this.extractTokenWithRegex(data, regexToExecute);
             if (token === 'TEXT_VALUE' && result?.matchedValue) {
-                // TODO - find a better way of doing this
                 result.matchedValue = result.matchedValue.replace(/'/g, '');
             }
             if (result) {

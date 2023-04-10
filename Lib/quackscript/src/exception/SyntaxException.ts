@@ -1,6 +1,6 @@
 import { Position } from '../types/Position';
 
-export class ParsingException {
+export class SyntaxException {
 
     public placement: Position;
 
@@ -12,6 +12,6 @@ export class ParsingException {
     }
 
     toString() {
-        return `Parse Error: In line ${this.placement.line} at char ${this.placement.char} \n ${this.message}`;
+        return `Syntax Error: In line ${this.placement.line} at char ${this.placement.char} \n ${this.message}`;
     }
 }

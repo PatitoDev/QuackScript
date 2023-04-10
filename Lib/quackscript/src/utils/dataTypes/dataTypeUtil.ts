@@ -1,5 +1,5 @@
-import { Value } from '../interpreter/types';
-import { DataTypes } from '../parser/types';
+import { Value } from '../../interpreter/types';
+import { DataTypes } from '../../parser/types';
 
 const valueToDataTypeMap: Record<Value['type'], DataTypes> = {
     BooleanLiteral: 'boolean',

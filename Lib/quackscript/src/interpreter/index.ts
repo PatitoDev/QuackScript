@@ -1,4 +1,4 @@
-import { DataTypeUtil } from '../dataTypes/dataTypeUtil';
+import { DataTypeUtil } from '../utils/dataTypes/dataTypeUtil';
 import { ControlFlowException } from '../exception/ControlFlowException';
 import { RuntimeException } from '../exception/RuntimeException';
 import Lexer from '../lexer';

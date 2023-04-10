@@ -1,15 +1,158 @@
+import { ParsingException } from '../exception/ParsingException';
 import { Token } from '../types/Token';
-import { Cursor } from './cursor';
+import { Cursor } from './Cursor';
+import { TerminalParser } from './TerminalParser';
 import { 
-    AssignmentNode, AssignmentOperatorNode, BinaryExpressionNode, 
+    AssignmentNode, BinaryExpressionNode, 
     DeclarationNode, ExpressionNode,
     FuncCallNode,
-    IdentifierNode, LiteralNode, ModuleNode,
+    IdentifierNode, ModuleNode,
     ArgsNode,
-    StatementNode, TerminatorNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode, NumberLiteralNode, TextLiteralNode, BooleanLiteralNode, NothingLiteralNode, DataTypeNode, MathematicalOperatorTypes, IfStatementNode, ImportStatementNode } from './types';
+    StatementNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode,
+    TextLiteralNode, NothingLiteralNode, IfStatementNode,
+    ImportStatementNode } from './types';
 
 
-export default class Parser {
+export default class Parser extends TerminalParser {
+
+    public parse = (tokens: Array<Token>) => {
+        const excludedWhiteSpace = tokens
+            .filter((t) => t.type !== 'WHITESPACE' && t.type !== 'NEW_LINE')
+            .filter((t) => t.type !== 'COMMENT_SHORT' && t.type !== 'COMMENT_LONG');
+
+        console.log(excludedWhiteSpace);
+        this._cursor = new Cursor(excludedWhiteSpace);
+        this._errors = [];
+
+        const module:ModuleNode = {
+            type: 'Module',
+            statements: [],
+            position: {
+                char: 0,
+                line: 0,
+                start: 0,
+            }
+        };
+
+        while (!this._cursor.hasReachedEnd()) {
+            try {
+                const nextToken = this._cursor.readCurrentToken();
+                if (!nextToken) throw new Error(`Something has gone wrong handling the cursor at ${this._cursor.getPosition()}`);
+                const nextStatement = this.statement();
+
+                if (nextStatement) {
+                    module.statements.push(nextStatement);
+                } else {
+                    throw new ParsingException(nextToken.position, 'Invalid statement');
+                }
+            } catch (err) {
+                if (err instanceof Error) {
+                    this._errors.push(err.message);
+                } else if (err instanceof ParsingException) {
+                    this._errors.push(err.toString());
+                }
+                this._cursor.skipTo('TERMINATOR');
+                this._cursor.advanceCursor(1);
+            }
+        }
+
+        if (this._errors.length) {
+            throw new Error(this._errors.join('\n\n'));
+        }
+
+        return module;
+    };
+
+    /*
+        <statement> := <declaration> <terminator>
+                        | <assignment> <terminator>
+                        | <expression> <terminator>
+                        | <if-statement> <terminator>
+                        | <returnStatement> <terminator>
+    */
+    private statement = (): StatementNode | null => {
+        const firstToken = this._cursor.readCurrentToken();
+        if (!firstToken) return null;
+
+        const declaration = this.declaration();
+        let generatedNode:StatementNode | null = null;
+
+        if (declaration) {
+            generatedNode = {
+                body: declaration,
+                type: 'Statement',
+                position: firstToken.position
+            };
+        }
+
+        if (!generatedNode) {
+            const ifStatement = this.ifStatement();
+            if (ifStatement) {
+                generatedNode = {
+                    body: ifStatement,
+                    type: 'Statement',
+                    position: firstToken.position
+                };
+            }
+        }
+
+        if (!generatedNode) {
+            const assignment = this.assignment();
+            if (assignment) {
+                generatedNode = {
+                    body: assignment,
+                    type: 'Statement',
+                    position: firstToken.position
+                };
+            }
+        }
+
+        if (!generatedNode) {
+            const expression = this.expression();
+            if (expression) {
+                generatedNode = {
+                    body: expression,
+                    type: 'Statement',
+                    position: firstToken.position
+                };
+            }
+        }
+
+
+        if (!generatedNode) {
+            const returnStatement = this.returnStatement();
+            if (returnStatement) {
+                generatedNode = {
+                    body: returnStatement,
+                    type: 'Statement',
+                    position: firstToken.position
+                };
+            }
+        }
+
+        if (!generatedNode) {
+            const importStatement = this.importStatement();
+            if (importStatement) {
+                generatedNode = {
+                    body: importStatement,
+                    type: 'Statement',
+                    position: firstToken.position
+                };
+            }
+        }
+
+        if (generatedNode) {
+            const terminalNode = this.terminator();
+            if (!terminalNode) {
+                throw new ParsingException(
+                    this._cursor.getCurrentPositionOrLastVisited(),
+                    `Expected '🦆' but found '${this._cursor.readCurrentToken()?.value ?? 'EOF'}'`);
+            }
+            return generatedNode;
+        }
+
+        return null;
+    };
 
     /*
         <import-statement> := <import> <text-literal> <terminator>
@@ -20,7 +163,9 @@ export default class Parser {
         this._cursor.advanceCursor(1);
         const literalNode = this.literal();
         if (literalNode?.type !== 'TextLiteral') {
-            throw new Error('Expected file to import');
+            throw new ParsingException(
+                this._cursor.getCurrentPositionOrLastVisited(),
+                'Expected file to import');
         }
 
         return {
@@ -31,133 +176,35 @@ export default class Parser {
     };
 
     /*
-        can be replaced with just literal
-        <terminal-expression> :== <literal> // <func> <var call>
+        <code-block> := <curly-bracket-open> <statement> <curly-bracket-open>
     */
-    private terminalExpression = () => {
-        return this.literal() || this.identifier();
-    };
-
-    /*
-        <terminator> := 🦆
-    */
-    private terminator = (): TerminatorNode | null => {
-        const token = this._cursor.readCurrentToken();
-
-        if (token && token.type === 'TERMINATOR') {
-            this._cursor.advanceCursor(1);
-            const result: TerminatorNode = {
-                type: 'Terminator',
-                value: '🦆',
-                position: token.position
-            };
-            return result;
-        }
-        return null;
-    };
-
-    /*
-        <literal> := <number> | <text> | <boolean> | <nothing> | <vector2> | <vector3>;
-    */
-    private literal = ():LiteralNode | null => {
-        const token = this._cursor.readCurrentToken();
-        if (!token) return null;
-
-        if (token.type === 'NUMBER_VALUE'){
-            this._cursor.advanceCursor(1);
-            const value:NumberLiteralNode = {
-                type: 'NumberLiteral',
-                value: Number(token.value),
-                position: token.position,
-            };
-            return value;
-        }
-
-        if (token.type === 'TEXT_VALUE'){
-            this._cursor.advanceCursor(1);
-            const value:TextLiteralNode = {
-                type: 'TextLiteral',
-                value: token.value,
-                position: token.position
-            };
-            return value;
-        }
-
-        if (token.type === 'BOOLEAN_VALUE'){
-            this._cursor.advanceCursor(1);
-            if (
-                token.value !== 'true' &&
-                token.value !== 'false') {
-                throw new Error('Internal error');
-            }
-            const value = token.value === 'true';
-            const literalValue:BooleanLiteralNode = {
-                type: 'BooleanLiteral',
-                value: value,
-                position: token.position
-            };
-            return literalValue;
-        }
-
-        if (token.type === 'NOTHING'){
-            this._cursor.advanceCursor(1);
-            const value: NothingLiteralNode = {
-                type: 'NothingLiteral',
-                position: token.position
-            };
-            return value;
-        }
-
-        // TODO - add vector literals
-
-        return null;
-    };
-
-    /*
-        <identifier> := string
-    */
-    private identifier = () => {
-        const token = this._cursor.readCurrentToken(); 
-
-        if (!token || token.type !== 'IDENTIFIER') return null;
-        const node:IdentifierNode = {
-            type: 'Identifier',
-            value: token.value,
-            position: token.position
-        };
+    private codeBlock = (): CodeBlockNode | null => {
+        const leftBracket = this._cursor.readCurrentToken();
+        if (leftBracket?.type !== 'CURLY_BRACKET_OPEN') return null;
         this._cursor.advanceCursor(1);
-        return node;
-    };
 
-    private isOperator = (token: Token) => (
-        token.type === 'ADDITION' ||
-        token.type === 'SUBTRACTION' ||
-        token.type === 'MULTIPLICATION' ||
-        token.type === 'MODULUS' ||
-        token.type === 'DIVISION' ||
-        token.type === 'AND' ||
-        token.type === 'OR' ||
-        token.type === 'LESS_THAN' ||
-        token.type === 'GREATER_THAN' ||
-        token.type === 'LESS_THAN_OR_EQUALS' ||
-        token.type === 'GREATER_THAN_OR_EQUALS' ||
-        token.type === 'EQUALS' ||
-        token.type === 'NOT_EQUALS'
-    );
+        const body: Array<StatementNode> = [];
+        let nextStatement: StatementNode | null = null;
+        do {
+            nextStatement = this.statement();
+            if (nextStatement) {
+                body.push(nextStatement);
+            }
+        } while (nextStatement !== null);
 
-    /*
-        <operator> := + | - | * | % | && | || | < | <= | > | >= | ==  | !=
-    */
-    private operator = () => {
-        const token = this._cursor.readCurrentToken();
-        if (!token) return null;
-        
-        if (this.isOperator(token)){ 
-            this._cursor.advanceCursor(1);
-            return token.value as MathematicalOperatorTypes;
+        const rightBracket = this._cursor.readCurrentToken();
+        if (rightBracket?.type !== 'CURLY_BRACKET_CLOSE') {
+            throw new ParsingException(
+                this._cursor.getCurrentPositionOrLastVisited(),
+                `Expected :} but found ${rightBracket?.value ?? 'EOF'}`);
         }
+        this._cursor.advanceCursor(1);
 
-        return null;
+        return {
+            body,
+            type: 'CodeBlock',
+            position: leftBracket.position
+        };
     };
 
     /*
@@ -185,36 +232,6 @@ export default class Parser {
         }
 
         return paramNode;
-    };
-
-    /*
-        <code-block> := {: <statement> :}
-    */
-    private codeBlock = (): CodeBlockNode | null => {
-        const leftBracket = this._cursor.readCurrentToken();
-        if (leftBracket?.type !== 'CURLY_BRACKET_OPEN') return null;
-        this._cursor.advanceCursor(1);
-    
-        const body: Array<StatementNode> = [];
-        let nextStatement: StatementNode | null = null;
-        do {
-            nextStatement = this.statement();
-            if (nextStatement) {
-                body.push(nextStatement);
-            }
-        } while (nextStatement !== null);
-    
-        const rightBracket = this._cursor.readCurrentToken();
-        if (rightBracket?.type !== 'CURLY_BRACKET_CLOSE') {
-            throw new Error(`Expected :} but found ${rightBracket?.value}`);
-        }
-        this._cursor.advanceCursor(1);
-    
-        return {
-            body,
-            type: 'CodeBlock',
-            position: leftBracket.position
-        };
     };
 
     /*
@@ -285,7 +302,7 @@ export default class Parser {
     };
 
     /*
-        <func> := <identifier> <bracket-open> <params> <bracket-close> 
+        <func> := <identifier> <bracket-open> <params> <bracket-close>
     */
     private funcCall = (): FuncCallNode | null => {
         const firstNode = this._cursor.readCurrentToken();
@@ -320,6 +337,14 @@ export default class Parser {
     };
 
     /*
+        this is used for binary expression terminal node
+        <terminal-expression> :== <literal> | <identifier>
+    */
+    private terminalExpression = () => {
+        return this.literal() || this.identifier();
+    };
+
+    /*
         <binary-expression> :== <terminal-expression> <operator> <expression>
     */
     private binaryExpression = (): BinaryExpressionNode | null => {
@@ -346,7 +371,7 @@ export default class Parser {
             type: 'BinaryExpression',
             position: firstToken.position
         };
-        
+
         return expression;
     };
 
@@ -402,21 +427,6 @@ export default class Parser {
         return null;
     };
 
-    /*
-        <assignment-operator> := <-
-    */
-    private assignMentOperator = (): AssignmentOperatorNode | null => {
-        const token = this._cursor.readCurrentToken();
-        if (!token || token.type !== 'ASSIGNMENT_OPERATOR') return null;
-        this._cursor.advanceCursor(1);
-        const node:AssignmentOperatorNode = {
-            type: 'AssignmentOperator',
-            value: token.value,
-            position: token.position
-        };
-        return node;
-    };
-
 
     /*
         test <- liter🦆
@@ -447,65 +457,6 @@ export default class Parser {
             type: 'Assignment',
             position: currentToken.position
         };
-    };
-
-    // <dataType> := <colon> <data-type>
-    private dataTypeDeclaration = (): DataTypeNode | null => {
-        const token = this._cursor.readCurrentToken();
-        if (token?.type !== 'COLON') return null;
-        this._cursor.advanceCursor(1);
-        const possibleDataType = this._cursor.readCurrentTokenAndAdvanceByOne();
-        switch (possibleDataType?.type) {
-        case 'TEXT_TYPE':
-            return {
-                type: 'DataType',
-                value: 'text',
-                position: token.position
-            };
-        case 'NUMBER_TYPE':
-            return {
-                type: 'DataType',
-                value: 'number',
-                position: token.position
-            };
-        case 'BOOLEAN_TYPE':
-            return {
-                type: 'DataType',
-                value: 'boolean',
-                position: token.position
-            };
-        case 'NOTHING':
-            return {
-                type: 'DataType',
-                value: 'nothing',
-                position: token.position
-            };
-        case 'ARROW_FUNCTION':
-            return {
-                type: 'DataType',
-                value: 'func',
-                position: token.position
-            };
-        case 'FUNC_TYPE':
-            return {
-                type : 'DataType',
-                value: 'func',
-                position: token.position
-            };
-        case 'VECTOR2':
-            return {
-                type : 'DataType',
-                value: 'vector2',
-                position: token.position
-            };
-        case 'VECTOR3':
-            return {
-                type : 'DataType',
-                value: 'vector3',
-                position: token.position
-            };
-        }
-        throw new Error(`Expected data type but found ${this._cursor.readCurrentToken()?.value}`);
     };
 
     /*
@@ -648,11 +599,11 @@ export default class Parser {
     private returnStatement = (): ReturnStatementNode | null => {
         const token = this._cursor.readCurrentToken();
         if (token?.type !== 'RETURN') return null;
-        
+
         this._cursor.advanceCursor(1);
         const expressionNode = this.expression();
         if (!expressionNode) throw new Error(`Expecting expression but found ${this._cursor.readCurrentToken()?.value}`);
-        
+
         const terminatorNode = this._cursor.readCurrentToken();
         if (terminatorNode?.type !== 'TERMINATOR') throw new Error(`Expecting 🦆 but found ${this._cursor.readCurrentToken()?.value}`);
         return {
@@ -662,127 +613,4 @@ export default class Parser {
         };
     };
 
-    /*
-        <statement> := <declaration> <terminator> | <assignment> <terminator> | <expression> <terminator> | <if-statement> <terminator> | <returnStatement>
-    */
-    private statement = (): StatementNode | null => {
-        const firstToken = this._cursor.readCurrentToken();
-        if (!firstToken) return null;
-
-        const declaration = this.declaration();
-        let generatedNode:StatementNode | null = null;
-
-        if (declaration) {
-            generatedNode = {
-                body: declaration,
-                type: 'Statement',
-                position: firstToken.position
-            };
-        }
-
-        if (!generatedNode) {
-            const ifStatement = this.ifStatement();
-            if (ifStatement) {
-                generatedNode = {
-                    body: ifStatement,
-                    type: 'Statement',
-                    position: firstToken.position
-                };
-            }
-        }
-
-        if (!generatedNode) {
-            const assignment = this.assignment();
-            if (assignment) {
-                generatedNode = {
-                    body: assignment,
-                    type: 'Statement',
-                    position: firstToken.position
-                };
-            }
-        }
-
-        if (!generatedNode) {
-            const expression = this.expression();
-            if (expression) {
-                generatedNode = {
-                    body: expression,
-                    type: 'Statement',
-                    position: firstToken.position
-                };
-            }
-        }
-
-
-        if (!generatedNode) {
-            const returnStatement = this.returnStatement();
-            if (returnStatement) {
-                generatedNode = {
-                    body: returnStatement,
-                    type: 'Statement',
-                    position: firstToken.position
-                };
-            }
-        }
-
-        if (!generatedNode) {
-            const importStatement = this.importStatement();
-            if (importStatement) {
-                generatedNode = {
-                    body: importStatement,
-                    type: 'Statement',
-                    position: firstToken.position
-                };
-            }
-        }
-
-        if (generatedNode) {
-            const terminalNode = this.terminator();
-            if (!terminalNode) {
-                throw new Error(`expected 🦆 but found ${this._cursor.readCurrentToken()?.value ?? 'EOF'}`);
-            }
-            return generatedNode;
-        }
-
-        return null;
-    };
-
-    private _cursor: Cursor = new Cursor([]);
-
-    public parse = (tokens: Array<Token>) => {
-        const excludedWhiteSpace = tokens
-            .filter((t) => t.type !== 'WHITESPACE' && t.type !== 'NEW_LINE')
-            .filter((t) => t.type !== 'COMMENT_SHORT' && t.type !== 'COMMENT_LONG');
-        console.log(excludedWhiteSpace);
-        this._cursor = new Cursor(excludedWhiteSpace);
-
-        const module:ModuleNode = {
-            type: 'Module',
-            statements: [],
-            position: {
-                char: 0,
-                line: 0,
-                start: 0,
-            }
-        };
-
-        let hasError = false;
-        do  {
-            const nextToken = this._cursor.readCurrentToken();
-            if (!nextToken) throw new Error(`Something has gone wrong handling the cursor at ${this._cursor.getPosition()}`);
-            const nextStatement = this.statement();
-            if (nextStatement) {
-                module.statements.push(nextStatement);
-            }
-            if (!nextStatement) {
-                hasError = true;
-            }
-        } while (!this._cursor.hasReachedEnd() && !hasError);
-
-        if (hasError) {
-            throw new Error(`expected statement found ${this._cursor.readCurrentToken()?.value}`);
-        }
-
-        return module;
-    };
 }

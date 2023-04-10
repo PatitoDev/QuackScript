@@ -1,4 +1,4 @@
-import { DataTypeUtil } from '../dataTypes/dataTypeUtil';
+import { DataTypeUtil } from '../utils/dataTypes/dataTypeUtil';
 import standardLibrary from '../stdLibrary/standardLibrary';
 import { MemoryValue, Value } from './types';
 

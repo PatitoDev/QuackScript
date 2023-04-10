@@ -48,39 +48,6 @@ export interface BinaryExpressionNode extends Node<'BinaryExpression'> {
     operator: OperatorTypes
 }
 
-export type LiteralNode<T extends LiteralNodeTypes = LiteralNodeTypes> = Node<T>;
-
-export type NothingLiteralNode = LiteralNode<'NothingLiteral'>;
-
-export interface BooleanLiteralNode extends LiteralNode<'BooleanLiteral'> {
-    value: boolean
-}
-
-export interface NumberLiteralNode extends LiteralNode<'NumberLiteral'> {
-    value: number
-}
-
-export interface TextLiteralNode extends LiteralNode<'TextLiteral'> {
-    value: string
-}
-
-export interface Vector2LiteralNode extends LiteralNode<'Vector2Literal'> {
-    x: NumberLiteralNode,
-    y: NumberLiteralNode
-}
-
-export interface Vector3LiteralNode extends Vector2LiteralNode {
-    z: NumberLiteralNode,
-}
-
-export interface DataTypeNode extends Node<'DataType'> {
-    value: DataTypes,
-}
-
-export interface TerminatorNode extends Node<'Terminator'> {
-    value: '🦆';
-}
-
 export interface IdentifierNode extends Node<'Identifier'> {
     value: string;
 }
@@ -158,4 +125,38 @@ export interface IfStatementNode extends Node<'IfStatement'> {
 
 export interface ImportStatementNode extends Node<'ImportStatement'> {
     value: TextLiteralNode
+}
+
+/** Terminal Nodes **/
+export interface DataTypeNode extends Node<'DataType'> {
+    value: DataTypes,
+}
+
+export interface TerminatorNode extends Node<'Terminator'> {
+    value: '🦆';
+}
+
+export type LiteralNode<T extends LiteralNodeTypes = LiteralNodeTypes> = Node<T>;
+
+export type NothingLiteralNode = LiteralNode<'NothingLiteral'>;
+
+export interface BooleanLiteralNode extends LiteralNode<'BooleanLiteral'> {
+    value: boolean
+}
+
+export interface NumberLiteralNode extends LiteralNode<'NumberLiteral'> {
+    value: number
+}
+
+export interface TextLiteralNode extends LiteralNode<'TextLiteral'> {
+    value: string
+}
+
+export interface Vector2LiteralNode extends LiteralNode<'Vector2Literal'> {
+    x: NumberLiteralNode,
+    y: NumberLiteralNode
+}
+
+export interface Vector3LiteralNode extends Vector2LiteralNode {
+    z: NumberLiteralNode,
 }

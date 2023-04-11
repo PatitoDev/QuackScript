@@ -88,9 +88,8 @@ export class Memory {
     }
 
     public update(identifier: string, value: Value) {
-        const scope = this.getActiveScope();
+        const memoryItem = this.get(identifier);
 
-        const memoryItem = scope.data[identifier];
         if (!memoryItem) throw new Error(`variable '${identifier}' does not exists`);
         if (memoryItem.declarationType === 'constant') throw new Error(`Tried to update constant '${identifier}'`);
         if (memoryItem.declarationType === 'argument') throw new Error(`Tried to update argument '${identifier}'`);

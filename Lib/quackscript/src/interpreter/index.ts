@@ -1,9 +1,10 @@
-import { DataTypeUtil } from '../utils/dataTypes/dataTypeUtil';
+import { DataTypeUtils } from '../utils/dataTypes/dataTypeUtils';
 import { ControlFlowException } from '../exception/ControlFlowException';
 import { RuntimeException } from '../exception/RuntimeException';
 import Lexer from '../lexer';
 import Parser from '../parser';
 import { 
+    AccessorExpressionNode,
     AssignmentNode, BinaryExpressionNode, BooleanLiteralNode, CodeBlockNode, DeclarationNode, ExpressionNode,
     FuncCallNode, FuncDeclarationNode, GenericFuncDeclarationNode, IdentifierNode,
     IfStatementNode,
@@ -16,6 +17,7 @@ import { System } from '../system';
 import { Memory } from './memory';
 import { State } from './state';
 import { Value } from './types';
+import { StaticPrimitiveAttributes } from './staticPrimitiveAttributes';
 
 // TODO - make a stdout to output
 export default class Interpreter {
@@ -56,16 +58,13 @@ export default class Interpreter {
 
     public executeModule(moduleNode: ModuleNode): null {
         const modulesImported = this.executeAllTopImports(moduleNode);
-        console.log(modulesImported);
         const importedModulesCounts = modulesImported.length;
         const statementsToExecute = moduleNode.statements.splice(importedModulesCounts);
-        console.log(statementsToExecute);
 
         for (const statement of statementsToExecute) {
             const output = this.executeStatement(statement);
             if (output !== null && output.type !== 'NothingLiteral'){
-                // TODO - parse to string output
-                this._system.stdout(JSON.stringify(output));
+                this._system.stdout(DataTypeUtils.convertValueToText(output).value);
             }
         }
 
@@ -167,7 +166,7 @@ export default class Interpreter {
         }
 
         // if we have a type declared assign it else we inferred it
-        const type = node.dataType?.value ?? DataTypeUtil.valueToDataType(value.type);
+        const type = node.dataType?.value ?? DataTypeUtils.valueToDataType(value.type);
 
         this._memory.set(id, {
             isOptional: node.isOptional,
@@ -217,7 +216,7 @@ export default class Interpreter {
             if (!arg) throw new Error('internal error, index out of bounds');
             const argResult = this.executeExpressionNode(arg);
             if (argResult === null) throw new Error('null as parameter not allowed yet');
-            const dataType = DataTypeUtil.valueToDataType(argResult.type);
+            const dataType = DataTypeUtils.valueToDataType(argResult.type);
             this._memory.set(param.value, {
                 declarationType: 'argument',
                 identifier: param.value,
@@ -266,7 +265,23 @@ export default class Interpreter {
             return this._memory.get((node.body as IdentifierNode).value).value;
         case 'BinaryExpression':
             return this.executeBinaryExpression(node.body as BinaryExpressionNode);
+        case 'AccessorExpression':
+            return this.executeAccessorExpression(node.body as AccessorExpressionNode);
         }
+    };
+
+    private executeAccessorExpression = (node: AccessorExpressionNode): Value => {
+        const expressionValue = this.executeExpressionNode(node.expression);
+        const expressionDataType = DataTypeUtils.valueToDataType(expressionValue.type);
+
+        // we only have primitives yet, but once we add objects we need accessor logic
+        // TODO - add object accessor
+        if (node.value.type === 'FuncCallNode') {
+            return StaticPrimitiveAttributes
+                .executeStaticFunction(node.value.identifier, expressionValue);
+        }
+
+        throw new RuntimeException(node.position, `Attribute ${node.value} is not part ${expressionDataType}`);
     };
 
     private executeBinaryExpression = (node: BinaryExpressionNode): Value => {

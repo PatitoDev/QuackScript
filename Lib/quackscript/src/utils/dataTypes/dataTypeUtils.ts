@@ -1,5 +1,5 @@
 import { Value } from '../../interpreter/types';
-import { BooleanLiteralNode, DataTypes, NumberLiteralNode, TextLiteralNode } from '../../parser/types';
+import { BooleanLiteralNode, DataTypes, FuncDeclarationNode, NumberLiteralNode, TextLiteralNode } from '../../parser/types';
 
 const valueToDataTypeMap: Record<Value['type'], DataTypes> = {
     BooleanLiteral: 'boolean',
@@ -20,6 +20,11 @@ const convertValueToText = (value: Value): TextLiteralNode => {
         break;
     case 'FuncDeclaration':
     case 'InternalFuncDeclaration':
+        // eslint-disable-next-line no-case-declarations
+        const paramsAsString = ((value as FuncDeclarationNode).parameters)?.params.map((value) => ( 
+            value.value
+        )).join(', ') ?? '';
+        textValue = `(: ${paramsAsString} :) :> {: [function-body] :}`;
         break;
     case 'NothingLiteral':
         textValue = 'nothing';

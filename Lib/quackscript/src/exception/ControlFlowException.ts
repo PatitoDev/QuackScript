@@ -10,7 +10,7 @@ export class ControlFlowException {
     public type: ControlFlowType;
     public data: Value;
 
-    constructor (type: ControlFlowType, data?: Value | null) {
+    constructor (type: ControlFlowType, data?: Value | null | void) {
         this.type = type;
         this.data = data ?? {
             type: 'NothingLiteral',

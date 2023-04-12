@@ -56,19 +56,17 @@ export default class Interpreter {
         this._memory.printMemory();
     }
 
-    public executeModule(moduleNode: ModuleNode): null {
+    public executeModule(moduleNode: ModuleNode){
         const modulesImported = this.executeAllTopImports(moduleNode);
         const importedModulesCounts = modulesImported.length;
         const statementsToExecute = moduleNode.statements.splice(importedModulesCounts);
 
         for (const statement of statementsToExecute) {
             const output = this.executeStatement(statement);
-            if (output !== null && output.type !== 'NothingLiteral'){
+            if (output && output.type !== 'NothingLiteral'){
                 this._system.stdout(DataTypeUtils.convertValueToText(output).value);
             }
         }
-
-        return null;
     }
 
     /**
@@ -102,30 +100,26 @@ export default class Interpreter {
                 throw new ControlFlowException('Return', outcome);
             }
         }
-        return null;
     }
 
-    private executeStatement(statement: StatementNode): Value | null {
+    private executeStatement(statement: StatementNode): Value | void {
         switch (statement.body.type) {
         case 'Declaration':
-            this.executeDeclaration(statement.body as DeclarationNode);
-            return null;
+            return this.executeDeclaration(statement.body as DeclarationNode);
         case 'Assignment':
-            this.executeAssignment(statement.body as AssignmentNode);
-            return null;
+            return this.executeAssignment(statement.body as AssignmentNode);
         case 'Expression':
             return this.executeExpressionNode(statement.body as ExpressionNode);
         case 'ReturnStatement':
             return this.executeExpressionNode((statement.body as ReturnStatementNode).value);
         case 'IfStatement':
-            this.executeIfStatementNode(statement.body as IfStatementNode);
-            return null;
+            return this.executeIfStatementNode(statement.body as IfStatementNode);
         case 'ImportStatement':
             throw new RuntimeException(statement.position, 'Import statements must be at the top of the file', this._code);
         }
     }
 
-    private executeIfStatementNode = (node: IfStatementNode): null => {
+    private executeIfStatementNode = (node: IfStatementNode): void => {
         const value = this.executeExpressionNode(node.condition);
         let isConditionTrue = false;
         switch (value.type){
@@ -150,7 +144,7 @@ export default class Interpreter {
             this.executeCodeBlock(node.falseExpression);
         }
 
-        return null;
+        return;
     };
 
     private executeDeclaration = (node: DeclarationNode) => {

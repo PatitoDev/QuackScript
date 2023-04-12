@@ -3,22 +3,21 @@ import CodeEditor from '../../molecules/CodeEditor';
 import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser } from 'quackscript';
-import { BooleanLiteralNode, NumberLiteralNode, TextLiteralNode } from 'quackscript/src/parser/types';
 
-const defaultQuackTextValue = `QUACK exampleFunction <- (:value:) :> {: return value🦆:}🦆
+const defaultQuackTextValue = `QUACK exampleFunction <- (value) > { return value🦆 }🦆
 
 quack optionalVariableTest?:text🦆
 optionalVariableTest <- 'hello world'🦆
 
-exampleFunction(:'this is quackscript':)🦆
-exampleFunction(:'in action':)🦆
+exampleFunction('this is quackscript')🦆
+exampleFunction('in action')🦆
 
-QUACK add <- (:first, second:) :> {:
+QUACK add <- ( first, second ) > {
     return first + second🦆
-:}🦆
+}🦆
 
-add(:5, 8:)🦆
-quackprint(:optionalVariableTest:)🦆
+add(5, 8)🦆
+quackprint(optionalVariableTest)🦆
 `;
 
 

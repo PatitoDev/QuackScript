@@ -14,9 +14,9 @@ Functions in Quackscript are considered a first class citizens, they can be pass
 To declare a function in Quackscript you must provide a function body and 0 or more parameters. Functions need to be assigned to a variable to be used.
 
 ```
-QUACK fnExample <- (::) :> {:
-    quackprint(:'Hello world':)🦆
-:}🦆
+QUACK fnExample <- () > {
+    quackprint('Hello world')🦆
+}🦆
 ```
 
 ## Return value
@@ -24,9 +24,9 @@ QUACK fnExample <- (::) :> {:
 A function without a `return` statement it will always return `nothing`. A `return` in a function allows you to return a specific value.
 
 ```js
-quack returnQuack <- (::) :> {:
+quack returnQuack <- () > {
     return 'quack'🦆
-:}🦆
+}🦆
 ```
 
 ## Parameters
@@ -34,10 +34,10 @@ quack returnQuack <- (::) :> {:
 A function can have 0 or more parameters. When calling the function the same number of arguments must be passed.
 
 ```js
-quack add <- (:first, second:) :> {:
+quack add <- (first, second) > {
     return first + second🦆
-:}🦆
+}🦆
 
 
-add(:1, 2:)🦆
+add(1, 2)🦆
 ```

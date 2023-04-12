@@ -33,23 +33,23 @@ export const tokenMap: Record<Lexemes, RegExp> = {
 
     'ASSIGNMENT_OPERATOR': /^<-/,
 
-    'BRACKET_OPEN': /^\(:/,
+    'BRACKET_OPEN': /^\(/,
 
-    'BRACKET_CLOSE': /^:\)/,
+    'BRACKET_CLOSE': /^\)/,
 
-    'SQUARE_BRACKET_OPEN': /^\[:/,
+    'SQUARE_BRACKET_OPEN': /^\[/,
 
-    'SQUARE_BRACKET_CLOSE': /^:\]/,
+    'SQUARE_BRACKET_CLOSE': /^\]/,
 
-    'CURLY_BRACKET_OPEN': /^{:/,
+    'CURLY_BRACKET_OPEN': /^{/,
 
-    'CURLY_BRACKET_CLOSE': /^:}/,
+    'CURLY_BRACKET_CLOSE': /^}/,
 
     'TEXT_VALUE': /^'.*?'/,
 
     'COMMA': /^,/,
 
-    'ARROW_FUNCTION': /^:>/,
+    'ARROW_FUNCTION': /^->/,
 
     'AND': /^&&/,
 

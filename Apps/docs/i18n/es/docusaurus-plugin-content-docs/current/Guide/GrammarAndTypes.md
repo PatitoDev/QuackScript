@@ -64,15 +64,15 @@ QUACK a <- 'hola mundo'🦆
 
 En QuackScript las variables pertenecen al ámbito global o al de bloque de código.
  
-Un bloque de código es definido como un par de `{:` `:}`
+Un bloque de código es definido como un par de `{` `}`
 
 ```js
 quack a <- 'hola mundo'🦆
 
-QUACK b <- (::) {:
+QUACK b <- () {
     QUACK c <- 32🦆
     a <- 'adiós mundo'🦆
-:}🦆
+}🦆
 ```
 
 En el ejemplo anterior la variable `a` está en el ámbito global, lo que significa que es accesible desde cualquier lugar del archivo. La variable `c` está declarada dentro de un bloque de código, lo que significa que solamente es accesible dentro de ese mismo bloque de código. Las variables son eliminadas de la memoria luego de que el bloque de código al que pertenecen finaliza su ejecución, entonces tras la ejecución de la función `b` la variable `c` ya no está en la memoria y `a` ha sido cambiada a `'adiós mundo'`.

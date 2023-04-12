@@ -197,7 +197,7 @@ export default class Parser extends TerminalParser {
         if (rightBracket?.type !== 'CURLY_BRACKET_CLOSE') {
             throw new ParsingException(
                 this._cursor.getCurrentPositionOrLastVisited(),
-                `Expected :} but found ${rightBracket?.value ?? 'EOF'}`);
+                `Expected } but found ${rightBracket?.value ?? 'EOF'}`);
         }
         this._cursor.advanceCursor(1);
 
@@ -279,13 +279,13 @@ export default class Parser extends TerminalParser {
         
         const rightBracket = this._cursor.readCurrentToken();
         if (rightBracket?.type !== 'BRACKET_CLOSE') {
-            throw new Error(`Expecting :) but found ${rightBracket?.value}`);
+            throw new Error(`Expecting ) but found ${rightBracket?.value}`);
         }
         this._cursor.advanceCursor(1);
 
         const arrowFunctionOperator = this._cursor.readCurrentToken();
-        if (arrowFunctionOperator?.type !== 'ARROW_FUNCTION') {
-            throw new Error(`Expecting :> but found ${arrowFunctionOperator?.value}`);
+        if (arrowFunctionOperator?.type !== 'GREATER_THAN') {
+            throw new Error(`Expecting > but found ${arrowFunctionOperator?.value}`);
         }
         this._cursor.advanceCursor(1);
 
@@ -325,7 +325,7 @@ export default class Parser extends TerminalParser {
     
         const nextToken = this._cursor.readCurrentToken();
         if (nextToken?.type !== 'BRACKET_CLOSE') {
-            throw new Error(`Expected :) but found ${nextToken?.value}`);
+            throw new Error(`Expected ) but found ${nextToken?.value}`);
         }
         this._cursor.advanceCursor(1);
 
@@ -560,7 +560,7 @@ export default class Parser extends TerminalParser {
 
         const possibleCloseBracket = this._cursor.readCurrentToken();
         if (possibleCloseBracket?.type !== 'BRACKET_CLOSE') {
-            throw new Error(`Expected :) but found ${possibleCloseBracket?.value}`);
+            throw new Error(`Expected ) but found ${possibleCloseBracket?.value}`);
         }
         this._cursor.advanceCursor(1);
 

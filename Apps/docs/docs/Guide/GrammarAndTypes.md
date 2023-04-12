@@ -64,15 +64,15 @@ QUACK a <- 'hello world'🦆
 
 In quackscript variables belong to the global scope or the code block.
 
-A code block is defined as a pair of `{:` `:}`
+A code block is defined as a pair of `{` `}`
 
 ```js
 quack a <- 'hello world'🦆
 
-QUACK b <- (::) {:
+QUACK b <- () {
     QUACK c <- 32🦆
     a <- 'bye world'🦆
-:}🦆
+}🦆
 ```
 
 On the example above. The variable `a` is on the global scope, which means is accessible anywhere on this file. Variable `c` is declared inside a code block which means it is only accessible inside such code block. Variables are deleted from memory after the block execution is finished so after the execution of the function `b` the variable `c` is no longer in memory and `a` has been changed to `'bye world'`.

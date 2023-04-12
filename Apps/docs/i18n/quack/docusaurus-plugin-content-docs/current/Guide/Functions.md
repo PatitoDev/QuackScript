@@ -14,9 +14,9 @@ Quack quack quack Quackscript quack quack quack quack quack quack quack, quack q
 Quack quack quack quack quack QuackScript quack quack quack quack quack quack quack 0 quack quack quack. quack quack quack quack quack quack quack quack quack quack.
 
 ```
-QUACK fnQuack <- (::) :> {:
-    quackprint(:'Quack quack':)🦆
-:}🦆
+QUACK fnQuack <- () > {
+    quackprint('Quack quack')🦆
+}🦆
 ```
 
 ## Quack quack quack
@@ -24,9 +24,9 @@ QUACK fnQuack <- (::) :> {:
 Quack quack quack quack quack `return` quack quack quack `nothing`. Quack `return` quack quack quack quack quack quack quack quack.
 
 ```js
-quack QuackQuack <- (::) :> {:
+quack QuackQuack <- () > {
     return 'quack'🦆
-:}🦆
+}🦆
 ```
 
 ## Quacks
@@ -34,10 +34,10 @@ quack QuackQuack <- (::) :> {:
 Quack quack quack quack 0 quack quack quack. Quack quack quack quack quack quack quack quack quack quack quack quack quack.
 
 ```js
-quack quaack <- (:quack1, quack2:) :> {:
+quack quaack <- (quack1, quack2) > {
     return quack1 + quack2🦆
-:}🦆
+}🦆
 
 
-quaack(:1, 2:)🦆
+quaack(1, 2)🦆
 ```

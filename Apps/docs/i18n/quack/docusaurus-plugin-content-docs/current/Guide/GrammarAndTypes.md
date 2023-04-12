@@ -64,15 +64,15 @@ QUACK a <- 'quack quack'🦆
 
 Quack QuackScript quack quack quack quack quack quack quack quack quack quack quack.
  
-Quack quack quack quack quack quack quack quack quack `{:` `:}`
+Quack quack quack quack quack quack quack quack quack `{` `}`
 
 ```js
 quack a <- 'quack quack'🦆
 
-QUACK b <- (::) {:
+QUACK b <- () {
     QUACK c <- 32🦆
     a <- 'quack quack'🦆
-:}🦆
+}🦆
 ```
 
 Quack quack quack quack quack quack `a` quack quack quack quack quack, quack quack quack quack quack quack quack quack quack. Quack quack `c` quack quack quack quack quack quack quack quack, quack quack quack quack quack quack quack quack quack quack quack quack. Quack quack quack quack quack quack quack quack quack quack quack quack quack quack quack quack quack, quack quack quack quack quack quack quack quack `b` quack quack `c` quack quack quack quack quack quack `a` quack quack quack quack `'adiós mundo'`.

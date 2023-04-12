@@ -7,7 +7,7 @@ export const tokenMap: Record<Lexemes, RegExp> = {
 
     'RETURN': /^return(?=[^a-z-A-Z0-9]|$)/,
 
-    'NUMBER_VALUE': /^[0-9]*\.?[0-9]*/,
+    'NUMBER_VALUE': /^[0-9]+(\.[0-9])?[0-9]*/,
 
     'NUMBER_TYPE': /^number(?=[^a-z-A-Z0-9]|$)/,
 

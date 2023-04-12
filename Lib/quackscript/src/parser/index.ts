@@ -10,7 +10,8 @@ import {
     ArgsNode,
     StatementNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode,
     TextLiteralNode, NothingLiteralNode, IfStatementNode,
-    ImportStatementNode } from './types';
+    ImportStatementNode, 
+    AccessorExpressionNode} from './types';
 
 
 export default class Parser extends TerminalParser {
@@ -376,55 +377,51 @@ export default class Parser extends TerminalParser {
     };
 
     /*
-        <expression> :== <binary-expression> | <literal> | <func-call> | <func-declaration> | <identifier>
+        <expression> := <binary-expression> | <literal> | <func-call> | <func-declaration> | <identifier> | <accessor-expression>
+        <accessor-expression> := <dot> <literal> | <dot> <func-call> | <dot> <literal> <expression> | <dot> <func-call> <expression>
     */
     private expression = (): ExpressionNode | null => {
-        const parsedBinaryExpression = this.binaryExpression();
-        if (parsedBinaryExpression) {
-            return {
-                type: 'Expression',
-                body: parsedBinaryExpression,
-                position: parsedBinaryExpression.position,
+        const expressionNodeBody = (
+            this.binaryExpression() ||
+            this.funcCall() ||
+            this.funcDeclaration() ||
+            this.identifier() ||
+            this.literal()
+        );
+
+        if (!expressionNodeBody) return null;
+
+        const expressionNode:ExpressionNode = {
+            type: 'Expression',
+            body: expressionNodeBody,
+            position: expressionNodeBody.position
+        };
+
+        let nextToken = this._cursor.readCurrentToken();
+        while (nextToken?.type === 'DOT') {
+            this._cursor.advanceCursor(1);
+            const accessorValue = (
+                this.funcCall() ||
+                this.identifier()
+            );
+
+            if (!accessorValue) {
+                throw new ParsingException(nextToken.position, 'Expected property');
+            }
+
+            const accessorExpression:AccessorExpressionNode = {
+                expression: { ...expressionNode },
+                type: 'AccessorExpression',
+                position: nextToken.position,
+                value: accessorValue
             };
+
+            expressionNode.body = accessorExpression;
+
+            nextToken = this._cursor.readCurrentToken();
         }
 
-        const funcCallNode = this.funcCall();
-        if (funcCallNode) {
-            return {
-                body: funcCallNode,
-                type: 'Expression',
-                position: funcCallNode.position
-            };
-        }
-
-        const funcDeclaration = this.funcDeclaration();
-        if (funcDeclaration) {
-            return {
-                body: funcDeclaration,
-                type: 'Expression',
-                position: funcDeclaration.position
-            };
-        }
-
-        const parsedIdentifier = this.identifier();
-        if (parsedIdentifier) {
-            return {
-                body: parsedIdentifier,
-                type: 'Expression',
-                position: parsedIdentifier.position
-            };
-        }
-
-        const parsedLiteral = this.literal();
-        if (parsedLiteral) {
-            return {
-                body: parsedLiteral,
-                type: 'Expression',
-                position: parsedLiteral.position
-            };
-        }
-
-        return null;
+        return expressionNode;
     };
 
 
@@ -612,5 +609,7 @@ export default class Parser extends TerminalParser {
             position: token.position
         };
     };
+
+
 
 }

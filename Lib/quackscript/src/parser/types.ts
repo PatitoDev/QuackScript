@@ -8,6 +8,8 @@ export type LiteralNodeTypes = 'TextLiteral' |
     'BooleanLiteral';
 
 export type NodeTypes = LiteralNodeTypes |
+    'AccessorExpression' |
+    'UnaryExpression' |
     'ImportStatement' | 
     'IfStatement' |
     'BinaryExpression' |
@@ -30,8 +32,9 @@ export type NodeTypes = LiteralNodeTypes |
     'DataType';
 
 export type DataTypes = 'boolean' | 'text' | 'nothing' |
-    'vector2' | 'vector3' | 'func' | 'list' | 'number';
+    'vector2' | 'vector3' | 'func' | 'list' | 'number' | 'optional';
 
+export type UnaryOperatorTypes = '!' | '-';
 export type MathematicalOperatorTypes = '+' | '-' | '/' | '%' | '*';
 export type ComparisonOperatorTypes = '==' | '>=' | '>' | '<' | '<=' | '!=';
 export type LogicalOperatorTypes = '&&' | '||';
@@ -42,18 +45,17 @@ export interface Node <T extends NodeTypes = NodeTypes> {
     position: Position
 }
 
-export interface BinaryExpressionNode extends Node<'BinaryExpression'> {
-    left: LiteralNode | IdentifierNode,
-    right: ExpressionNode,
-    operator: OperatorTypes
-}
-
 export interface IdentifierNode extends Node<'Identifier'> {
     value: string;
 }
 
 export interface ExpressionNode extends Node<'Expression'> {
-    body: BinaryExpressionNode | LiteralNode | IdentifierNode | FuncCallNode | FuncDeclarationNode
+    body: BinaryExpressionNode | LiteralNode | IdentifierNode | FuncCallNode | FuncDeclarationNode | AccessorExpressionNode
+}
+
+export interface AccessorExpressionNode extends Node<'AccessorExpression'> {
+    expression: ExpressionNode,
+    value: IdentifierNode | FuncCallNode
 }
 
 export interface AssignmentOperatorNode extends Node<'AssignmentOperator'> {
@@ -132,6 +134,11 @@ export interface DataTypeNode extends Node<'DataType'> {
     value: DataTypes,
 }
 
+export interface OptionalDataType extends DataTypeNode {
+    value: 'optional',
+    generic: Omit<DataTypes, 'optional'>
+}
+
 export interface TerminatorNode extends Node<'Terminator'> {
     value: '🦆';
 }
@@ -159,4 +166,15 @@ export interface Vector2LiteralNode extends LiteralNode<'Vector2Literal'> {
 
 export interface Vector3LiteralNode extends Vector2LiteralNode {
     z: NumberLiteralNode,
+}
+
+export interface BinaryExpressionNode extends Node<'BinaryExpression'> {
+    left: LiteralNode | IdentifierNode,
+    right: ExpressionNode,
+    operator: OperatorTypes
+}
+
+export interface UnaryExpressionNode extends Node<'UnaryExpression'> {
+    value: LiteralNode | IdentifierNode,
+    operator: UnaryOperatorTypes, 
 }

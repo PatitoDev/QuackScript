@@ -1,4 +1,4 @@
-import { DataTypeUtil } from '../utils/dataTypes/dataTypeUtil';
+import { DataTypeUtils } from '../utils/dataTypes/dataTypeUtils';
 import standardLibrary from '../stdLibrary/standardLibrary';
 import { MemoryValue, Value } from './types';
 
@@ -71,7 +71,7 @@ export class Memory {
         if (memorySlot) throw new Error(`Variable '${identifier}' already exists`);
 
         const variableType = value.type;
-        const valueType = DataTypeUtil.valueToDataType(value.value.type);
+        const valueType = DataTypeUtils.valueToDataType(value.value.type);
 
         const isOptionalAndCanBeAssigned = (value.isOptional && valueType === 'nothing');
 
@@ -93,7 +93,7 @@ export class Memory {
         if (!memoryItem) throw new Error(`variable '${identifier}' does not exists`);
         if (memoryItem.declarationType === 'constant') throw new Error(`Tried to update constant '${identifier}'`);
         if (memoryItem.declarationType === 'argument') throw new Error(`Tried to update argument '${identifier}'`);
-        const type = DataTypeUtil.valueToDataType(value.type);
+        const type = DataTypeUtils.valueToDataType(value.type);
         const isOptionalAndCanBeAssigned = (memoryItem.isOptional && type === 'nothing');
         if (!isOptionalAndCanBeAssigned && memoryItem.type !== type) throw new Error(`Tried to assign '${type}' to a '${memoryItem.type}'`);
 

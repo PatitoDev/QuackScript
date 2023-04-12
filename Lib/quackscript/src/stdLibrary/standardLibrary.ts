@@ -1,8 +1,11 @@
-import { InternalFuncDeclarationNode } from '../parser/types';
+import { InternalFuncDeclarationNode, TextLiteralNode } from '../parser/types';
 import { Memory } from '../interpreter/memory';
 import { MemoryValue, Value } from '../interpreter/types';
 import { Position } from '../types/Position';
 import { System } from '../system';
+import { MemoryUtils } from '../utils/memory/memoryUtils';
+import { RuntimeException } from '../exception/RuntimeException';
+
 
 const fakePosition:Position = {
     char: 0,
@@ -26,8 +29,8 @@ export const executeInternalFunc = (node: InternalFuncDeclarationNode,
 
 const execQuackPrint = (memory: Memory, system: System): Value => {
     const value = memory.get('value');
-    // TODO - add helper to parse to string
-    system.stdout(value.value.type);
+    if (value.type !== 'text') throw new RuntimeException(fakePosition, `Invalid type, expecting Text but found ${value.type}`);
+    system.stdout((value.value as TextLiteralNode).value);
     return { type: 'NothingLiteral', position: fakePosition };
 };
 
@@ -38,24 +41,8 @@ const _standardLibrary: Array<{
     { identifier: 'quackprint', params: ['value'] },
 ];
 
-const libraryAsArray = _standardLibrary.map((value) => ({
-    declarationType: 'internal',
-    identifier: value.identifier,
-    type: 'internalFunc',
-    value: {
-        identifier: value.identifier,
-        parameters: {
-            type: 'Params',
-            params: value.params.map((param) => ({
-                type: 'Identifier',
-                value: param
-            })),
-        },
-        type: 'InternalFuncDeclaration',
-    } as InternalFuncDeclarationNode
-}) as MemoryValue);
-
-const standardLibrary: Record<string, MemoryValue> = libraryAsArray
+const standardLibrary: Record<string, MemoryValue> = _standardLibrary
+    .map((value) => MemoryUtils.convertToInternalFunc(value.identifier, value.params))
     .reduce((a, b) => ({ ...a, [b.identifier]: b }), {});
 
 export default standardLibrary;

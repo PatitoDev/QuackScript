@@ -1,4 +1,4 @@
-import { ParsingException } from '../exception/ParsingException';
+import { ParseException } from '../exception/ParseException';
 import { Token } from '../types/Token';
 import { Cursor } from './Cursor';
 import { TerminalParser } from './TerminalParser';
@@ -11,7 +11,8 @@ import {
     StatementNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode,
     TextLiteralNode, NothingLiteralNode, IfStatementNode,
     ImportStatementNode, 
-    AccessorExpressionNode} from './types';
+    AccessorExpressionNode,
+} from './types';
 
 
 export default class Parser extends TerminalParser {
@@ -44,13 +45,15 @@ export default class Parser extends TerminalParser {
                 if (nextStatement) {
                     module.statements.push(nextStatement);
                 } else {
-                    throw new ParsingException(nextToken.position, 'Invalid statement');
+                    throw new ParseException(nextToken.position, 'Invalid statement');
                 }
             } catch (err) {
                 if (err instanceof Error) {
                     this._errors.push(err.message);
-                } else if (err instanceof ParsingException) {
+                } else if (err instanceof ParseException) {
                     this._errors.push(err.toString());
+                } else {
+                    this._errors.push(JSON.stringify(err));
                 }
                 this._cursor.skipTo('TERMINATOR');
                 this._cursor.advanceCursor(1);
@@ -145,7 +148,7 @@ export default class Parser extends TerminalParser {
         if (generatedNode) {
             const terminalNode = this.terminator();
             if (!terminalNode) {
-                throw new ParsingException(
+                throw new ParseException(
                     this._cursor.getCurrentPositionOrLastVisited(),
                     `Expected '🦆' but found '${this._cursor.readCurrentToken()?.value ?? 'EOF'}'`);
             }
@@ -164,7 +167,7 @@ export default class Parser extends TerminalParser {
         this._cursor.advanceCursor(1);
         const literalNode = this.literal();
         if (literalNode?.type !== 'TextLiteral') {
-            throw new ParsingException(
+            throw new ParseException(
                 this._cursor.getCurrentPositionOrLastVisited(),
                 'Expected file to import');
         }
@@ -195,7 +198,7 @@ export default class Parser extends TerminalParser {
 
         const rightBracket = this._cursor.readCurrentToken();
         if (rightBracket?.type !== 'CURLY_BRACKET_CLOSE') {
-            throw new ParsingException(
+            throw new ParseException(
                 this._cursor.getCurrentPositionOrLastVisited(),
                 `Expected } but found ${rightBracket?.value ?? 'EOF'}`);
         }
@@ -406,7 +409,7 @@ export default class Parser extends TerminalParser {
             );
 
             if (!accessorValue) {
-                throw new ParsingException(nextToken.position, 'Expected property');
+                throw new ParseException(nextToken.position, 'Expected property');
             }
 
             const accessorExpression:AccessorExpressionNode = {
@@ -477,12 +480,13 @@ export default class Parser extends TerminalParser {
             assignmentType = 'constant';
         }
 
-        const nextNode = this._cursor.lookAhead(1);
-        if (!nextNode) throw new Error('expected assignment');
         this._cursor.advanceCursor(1);
 
         const identifier = this.identifier();
-        if (!identifier) throw new Error('expected identifier');
+        if (!identifier) throw new ParseException(
+            this._cursor.getCurrentPositionOrLastVisited(),
+            'Expected declaration'
+        );
 
         const assignment: AssignmentNode = {
             type: 'Assignment',
@@ -504,9 +508,9 @@ export default class Parser extends TerminalParser {
             declaratorType: assignmentType,
             type: 'Declaration',
             assignmentNode: assignment,
-            isOptional: false,
             dataType: null,
-            position: assignment.position
+            position: assignment.position,
+            isOptional: false,
         };
 
         if (declarationExtras) {
@@ -515,12 +519,20 @@ export default class Parser extends TerminalParser {
                 this._cursor.advanceCursor(1);
             }
             declarationNode.dataType = this.dataTypeDeclaration();
+            if (declarationNode.dataType?.value === 'optional') {
+                declarationNode.isOptional = true;
+            }
             // check that the next item is a <-
-            const mustBeInitialized = !(declarationNode.dataType?.value === 'nothing' || declarationNode.isOptional);
+            const mustBeInitialized = !(declarationNode.dataType?.value === 'nothing' 
+                || declarationNode.isOptional 
+                || declarationNode.dataType?.value === 'optional');
+
             const possibleAssignmentOperator = this.assignMentOperator();
             if (possibleAssignmentOperator === null){
                 if (mustBeInitialized) {
-                    throw new Error(`${identifier.value} must be initialized`);
+                    throw new ParseException(
+                        declarationNode.position,
+                        `${identifier.value} must be initialized`);
                 } else {
                     return declarationNode;
                 }

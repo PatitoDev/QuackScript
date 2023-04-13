@@ -2,7 +2,7 @@ import { MemoryValue, } from '../../interpreter/types';
 import { InternalFuncDeclarationNode } from '../../parser/types';
 
 const convertToInternalFunc = (identifier: string, params: Array<string>): MemoryValue => ({
-    isOptional: false,
+    internalType: null,
     declarationType: 'internal',
     identifier: identifier,
     type: 'internalFunc',

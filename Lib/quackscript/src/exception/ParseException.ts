@@ -1,6 +1,6 @@
 import { Position } from '../types/Position';
 
-export class ParsingException {
+export class ParseException {
 
     public placement: Position;
 

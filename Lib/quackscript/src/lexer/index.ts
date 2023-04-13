@@ -11,9 +11,9 @@ export default class Lexer {
 
     constructor() {
         this._position = {
-            char: 0,
-            line: 0,
-            start: 0 // cursor
+            char: 1,
+            line: 1,
+            start: 1 // cursor
         };
         this._tokens = [];
     }
@@ -21,9 +21,9 @@ export default class Lexer {
     public convertToTokens(code: string): Array<Token> {
         this._tokens = [];
         this._position = {
-            char: 0,
-            line: 0,
-            start: 0
+            char: 1,
+            line: 1,
+            start: 1
         };
 
         const tokenKeys = Object.keys(tokenMap);
@@ -42,6 +42,7 @@ export default class Lexer {
                             position: { ...this._position },
                         });
                         this._position.char += result.value.length;
+                        this._position.start += result.value.length;
 
                         if (result.token === 'NEW_LINE') {
                             this._position.char = 0;

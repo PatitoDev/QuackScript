@@ -4,7 +4,9 @@ import * as S from './style';
 // TODO - import npm package
 import { Interpreter, Lexer, Parser } from 'quackscript';
 
-const defaultQuackTextValue = `QUACK exampleFunction <- (value) > { return value🦆 }🦆
+const defaultQuackTextValue = `QUACK exampleFunction <- (value:text) > { 
+    return value🦆 
+}🦆
 
 quack optionalVariableTest?:text🦆
 optionalVariableTest <- 'hello world'🦆
@@ -12,12 +14,12 @@ optionalVariableTest <- 'hello world'🦆
 exampleFunction('this is quackscript')🦆
 exampleFunction('in action')🦆
 
-QUACK add <- ( first, second ) > {
+QUACK add <- ( first:number, second:number ) > {
     return first + second🦆
 }🦆
 
 add(5, 8)🦆
-quackprint(optionalVariableTest)🦆
+quackprint(optionalVariableTest.unwrap())🦆
 `;
 
 

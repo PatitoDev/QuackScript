@@ -9,7 +9,8 @@ const valueToDataTypeMap: Record<Value['type'], DataTypes> = {
     Vector2Literal: 'vector2',
     Vector3Literal: 'vector3',
     FuncDeclaration: 'func',
-    InternalFuncDeclaration: 'func'
+    InternalFuncDeclaration: 'func',
+    OptionalValue: 'optional'
 };
 
 const convertValueToText = (value: Value): TextLiteralNode => {
@@ -38,6 +39,8 @@ const convertValueToText = (value: Value): TextLiteralNode => {
         throw new Error('conversion to string not implemented');
     case 'TextLiteral':
         return (value as TextLiteralNode);
+    case 'OptionalValue':
+        textValue = `${convertValueToText(value.value).value}:Optional<${value.internalType}>`;
     }
     return {
         position: value.position,

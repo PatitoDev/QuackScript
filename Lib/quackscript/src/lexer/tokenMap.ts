@@ -73,6 +73,8 @@ export const tokenMap: Record<Lexemes, RegExp> = {
 
     'ELSE': /^else(?=[^a-z-A-Z0-9]|$)/,
 
+    'OPTIONAL_TYPE': /^optional(?=[^a-zA-Z0-9]|$)/,
+
     'TEXT_TYPE': /^text(?=[^a-zA-Z0-9]|$)/,
 
     'BOOLEAN_VALUE': /^true|^false(?=[^a-zA-Z0-9]|$)/,

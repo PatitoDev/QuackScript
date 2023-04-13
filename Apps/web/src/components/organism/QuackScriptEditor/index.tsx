@@ -57,7 +57,7 @@ const QuackScriptEditor = () => {
             setCodeOutcome('');
             const tokens = lexer.convertToTokens(quackCode);
             const parsedOutcome = parser.parse(tokens);
-            console.log('tree: ', parsedOutcome);
+            console.log('tree: ', [...parsedOutcome.statements]);
             interpreter.execute(parsedOutcome, quackCode);
         } catch (e) {
             console.error(e);

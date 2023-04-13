@@ -1,6 +1,7 @@
+import { ParseException } from '../../exception/ParseException';
 import { Token } from '../../types/Token';
 import { Cursor } from '../Cursor';
-import { AssignmentOperatorNode, BooleanLiteralNode, DataTypeNode, IdentifierNode, LiteralNode, MathematicalOperatorTypes, NothingLiteralNode, NumberLiteralNode, TerminatorNode, TextLiteralNode } from '../types';
+import { AssignmentOperatorNode, BooleanLiteralNode, DataTypeNode, IdentifierNode, LiteralNode, MathematicalOperatorTypes, NothingLiteralNode, NumberLiteralNode, OptionalDataType, TerminatorNode, TextLiteralNode } from '../types';
 
 export class TerminalParser {
 
@@ -133,63 +134,111 @@ export class TerminalParser {
         return node;
     };
 
-    // <dataType> := <colon> <data-type>
-    protected dataTypeDeclaration = (): DataTypeNode | null => {
-        const token = this._cursor.readCurrentToken();
-        if (token?.type !== 'COLON') return null;
+    // <optional-type> := <less-than> <data-type> <more-than>
+    protected optionalDataType = (): OptionalDataType | null => {
+        const lessThanToken = this._cursor.readCurrentToken();
+        if (lessThanToken?.type !== 'LESS_THAN') return null;
         this._cursor.advanceCursor(1);
-        const possibleDataType = this._cursor.readCurrentTokenAndAdvanceByOne();
+
+        const type = this.dataType();
+        if (!type) throw new ParseException(lessThanToken.position, 'Expected data type');
+
+        const moreThanToken = this._cursor.readCurrentToken();
+        if (moreThanToken?.type !== 'GREATER_THAN') {
+            throw new ParseException(moreThanToken?.position ?? type.position, `Expected > but found ${moreThanToken?.value ?? 'EOF'}`);
+        }
+        this._cursor.advanceCursor(1);
+
+        return {
+            internalType: type.value,
+            position: lessThanToken.position,
+            type: 'DataType',
+            value: 'optional'
+        };
+    };
+
+    protected dataType = (): DataTypeNode | null => {
+        const possibleDataType = this._cursor.readCurrentToken();
+
+        let value: DataTypeNode | null = null;
         switch (possibleDataType?.type) {
+        case 'OPTIONAL_TYPE':
+            this._cursor.advanceCursor(1);
+            return this.optionalDataType();
         case 'TEXT_TYPE':
-            return {
+            value = {
                 type: 'DataType',
                 value: 'text',
-                position: token.position
+                position: possibleDataType.position
             };
+            break;
         case 'NUMBER_TYPE':
             return {
                 type: 'DataType',
                 value: 'number',
-                position: token.position
+                position: possibleDataType.position
             };
         case 'BOOLEAN_TYPE':
-            return {
+            value = {
                 type: 'DataType',
                 value: 'boolean',
-                position: token.position
+                position: possibleDataType.position
             };
+            break;
         case 'NOTHING':
-            return {
+            value = {
                 type: 'DataType',
                 value: 'nothing',
-                position: token.position
+                position: possibleDataType.position
             };
+            break;
         case 'ARROW_FUNCTION':
-            return {
+            value = {
                 type: 'DataType',
                 value: 'func',
-                position: token.position
+                position: possibleDataType.position
             };
+            break;
         case 'FUNC_TYPE':
-            return {
+            value = {
                 type : 'DataType',
                 value: 'func',
-                position: token.position
+                position: possibleDataType.position
             };
+            break;
         case 'VECTOR2':
-            return {
+            value = {
                 type : 'DataType',
                 value: 'vector2',
-                position: token.position
+                position: possibleDataType.position
             };
+            break;
         case 'VECTOR3':
-            return {
+            value = {
                 type : 'DataType',
                 value: 'vector3',
-                position: token.position
+                position: possibleDataType.position
             };
         }
-        throw new Error(`Expected data type but found ${this._cursor.readCurrentToken()?.value}`);
+
+        if (value) {
+            this._cursor.advanceCursor(1);
+        }
+
+        return value;
+    };
+
+    // <dataType> := <colon> <data-type> | <optional-type>
+    protected dataTypeDeclaration = (): DataTypeNode | null => {
+        const token = this._cursor.readCurrentToken();
+        if (token?.type !== 'COLON') return null;
+        this._cursor.advanceCursor(1);
+        const value = this.dataType();
+
+        if (!value) {
+            throw new ParseException(token.position, `Expected data type but found ${this._cursor.readCurrentToken()?.value}`);
+        }
+        return value;
     };
 
     protected isOperator = (token: Token) => (

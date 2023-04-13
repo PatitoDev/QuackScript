@@ -45,9 +45,6 @@ export class Cursor {
 
     public skipTo = (type: Lexemes) => {
         while (!this.hasReachedEnd() && this.readCurrentToken()?.type !== type){
-            console.log('skipping');
-            console.log(this.getPosition());
-            console.log(this._tokens.length);
             this.advanceCursor(1);
         }
     };

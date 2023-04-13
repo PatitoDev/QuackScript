@@ -8,6 +8,7 @@ export type LiteralNodeTypes = 'TextLiteral' |
     'BooleanLiteral';
 
 export type NodeTypes = LiteralNodeTypes |
+    'OptionalValue' |
     'AccessorExpression' |
     'UnaryExpression' |
     'ImportStatement' | 
@@ -136,7 +137,7 @@ export interface DataTypeNode extends Node<'DataType'> {
 
 export interface OptionalDataType extends DataTypeNode {
     value: 'optional',
-    generic: Omit<DataTypes, 'optional'>
+    internalType: DataTypes
 }
 
 export interface TerminatorNode extends Node<'Terminator'> {

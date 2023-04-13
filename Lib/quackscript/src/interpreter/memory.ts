@@ -1,6 +1,7 @@
 import { DataTypeUtils } from '../utils/dataTypes/dataTypeUtils';
 import standardLibrary from '../stdLibrary/standardLibrary';
-import { MemoryValue, Value } from './types';
+import { MemoryValue, OptionalMemoryValue, OptionalValueNode, Value } from './types';
+import { RuntimeException } from '../exception/RuntimeException';
 
 export type Scope = {
     subScope: Scope | null,
@@ -70,18 +71,35 @@ export class Memory {
         const memorySlot = scope.data[identifier];
         if (memorySlot) throw new Error(`Variable '${identifier}' already exists`);
 
-        const variableType = value.type;
         const valueType = DataTypeUtils.valueToDataType(value.value.type);
 
-        const isOptionalAndCanBeAssigned = (value.isOptional && valueType === 'nothing');
+        let dataNodeType = value.type;
+        if (dataNodeType === 'optional') {
+            dataNodeType = (value as OptionalMemoryValue).internalType;
+            if (dataNodeType === 'internalFunc'){
+                throw new RuntimeException(value.value.position, 'Tried to assign internal function');
+            }
 
-        if (isOptionalAndCanBeAssigned) {
-            scope.data[identifier] = value;
+            if (valueType !== 'nothing' && valueType !== dataNodeType){
+                throw new RuntimeException(value.value.position, `Tried to assign ${valueType} to optional<${dataNodeType}>`);
+            }
+
+            const valueToSave: OptionalValueNode = {
+                internalType: dataNodeType,
+                position: value.value.position,
+                type: 'OptionalValue',
+                value: value.value
+            };
+
+            scope.data[identifier] = {
+                ...value,
+                value: valueToSave
+            };
             return;
         }
 
-        if (variableType !== valueType) {
-            throw new Error(`Tried to assign '${valueType}' to a '${variableType}'`);
+        if (dataNodeType !== valueType) {
+            throw new Error(`Tried to assign '${valueType}' to a '${dataNodeType}'`);
         }
 
         scope.data[identifier] = value;
@@ -94,9 +112,15 @@ export class Memory {
         if (memoryItem.declarationType === 'constant') throw new Error(`Tried to update constant '${identifier}'`);
         if (memoryItem.declarationType === 'argument') throw new Error(`Tried to update argument '${identifier}'`);
         const type = DataTypeUtils.valueToDataType(value.type);
-        const isOptionalAndCanBeAssigned = (memoryItem.isOptional && type === 'nothing');
-        if (!isOptionalAndCanBeAssigned && memoryItem.type !== type) throw new Error(`Tried to assign '${type}' to a '${memoryItem.type}'`);
 
+        if (memoryItem.type === 'optional' && 
+            (memoryItem.internalType === type || type === 'nothing')
+        ){
+            (memoryItem.value as OptionalValueNode).value = value;
+            return;
+        }
+
+        if (memoryItem.type !== type) throw new Error(`Tried to assign '${type}' to a '${memoryItem.type}'`);
         memoryItem.value = value;
     }
 

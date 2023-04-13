@@ -5,18 +5,18 @@ import Lexer from '../lexer';
 import Parser from '../parser';
 import { 
     AccessorExpressionNode,
-    AssignmentNode, BinaryExpressionNode, BooleanLiteralNode, CodeBlockNode, DeclarationNode, ExpressionNode,
+    AssignmentNode, BinaryExpressionNode, BooleanLiteralNode, CodeBlockNode,  DeclarationNode, ExpressionNode,
     FuncCallNode, FuncDeclarationNode, GenericFuncDeclarationNode, IdentifierNode,
     IfStatementNode,
     ImportStatementNode,
-    InternalFuncDeclarationNode, ModuleNode, NothingLiteralNode, NumberLiteralNode, ReturnStatementNode,
+    InternalFuncDeclarationNode, ModuleNode, NothingLiteralNode, NumberLiteralNode, OptionalDataType, ReturnStatementNode,
     StatementNode, 
     TextLiteralNode} from '../parser/types';
 import { executeInternalFunc } from '../stdLibrary/standardLibrary';
 import { System } from '../system';
 import { Memory } from './memory';
 import { State } from './state';
-import { Value } from './types';
+import { OptionalMemoryValue, Value } from './types';
 import { StaticPrimitiveAttributes } from './staticPrimitiveAttributes';
 
 // TODO - make a stdout to output
@@ -151,23 +151,34 @@ export default class Interpreter {
         const typeOfAssignment = node.declaratorType;
         const id = node.assignmentNode.identifier.value;
 
-        let value: Value | null = null;
-        value = this.executeExpressionNode(node.assignmentNode.expression);
-        if (!value) {
-            value = {
-                type: 'NothingLiteral',
-            } as NothingLiteralNode;
+        // if we have a type declared assign it else we inferred it
+        const value = this.executeExpressionNode(node.assignmentNode.expression);
+        let type = node.dataType?.value ?? DataTypeUtils.valueToDataType(value.type);
+
+        if (node.isOptional) {
+            if (node.dataType) {
+                const optionalTypeNode = node.dataType as OptionalDataType;
+                type = optionalTypeNode.internalType ?? type;
+            }
+
+            const memoryValue: OptionalMemoryValue = {
+                declarationType: typeOfAssignment,
+                identifier: id,
+                type: 'optional',
+                value,
+                internalType: type
+            };
+            this._memory.set(id, memoryValue);
+            return;
         }
 
         // if we have a type declared assign it else we inferred it
-        const type = node.dataType?.value ?? DataTypeUtils.valueToDataType(value.type);
-
         this._memory.set(id, {
-            isOptional: node.isOptional,
             declarationType: typeOfAssignment,
             identifier: id,
             type,
-            value: value,
+            value,
+            internalType: null
         });
     };
 
@@ -216,7 +227,7 @@ export default class Interpreter {
                 identifier: param.value,
                 type: dataType,
                 value: argResult,
-                isOptional: false
+                internalType: null,
             });
         });
 

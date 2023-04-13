@@ -23,7 +23,8 @@ type DataTypeLexemes = 'NOTHING' |
     'NUMBER_VALUE' |
     'NUMBER_TYPE' |
     'VECTOR2' |
-    'VECTOR3';
+    'VECTOR3' | 
+    'OPTIONAL_TYPE';
 
 export type Lexemes = LogicalOperatorLexemes |
     ComparisonOperatorLexemes |

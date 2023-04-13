@@ -1,5 +1,6 @@
 import { Value } from '../../interpreter/types';
 import { BooleanLiteralNode, DataTypes, FuncDeclarationNode, NumberLiteralNode, TextLiteralNode } from '../../parser/types';
+import { DataTypeLexemes } from '../../types/Lexemes';
 
 const valueToDataTypeMap: Record<Value['type'], DataTypes> = {
     BooleanLiteral: 'boolean',
@@ -23,9 +24,9 @@ const convertValueToText = (value: Value): TextLiteralNode => {
     case 'InternalFuncDeclaration':
         // eslint-disable-next-line no-case-declarations
         const paramsAsString = ((value as FuncDeclarationNode).parameters)?.params.map((value) => ( 
-            value.value
+            `${value.identifier.value}:${value.dataType.value}`
         )).join(', ') ?? '';
-        textValue = `(: ${paramsAsString} :) :> {: [function-body] :}`;
+        textValue = `(${paramsAsString}) > { [function-body] }`;
         break;
     case 'NothingLiteral':
         textValue = 'nothing';
@@ -49,9 +50,17 @@ const convertValueToText = (value: Value): TextLiteralNode => {
     };
 };
 
-
+export const lexemeToDataTypeMap: Record<DataTypeLexemes, DataTypes> = {
+    'BOOLEAN_TYPE': 'boolean',
+    'FUNC_TYPE': 'func',
+    'NOTHING': 'nothing',
+    'NUMBER_TYPE': 'number',
+    'OPTIONAL_TYPE': 'optional',
+    'TEXT_TYPE': 'text',
+};
 
 export const DataTypeUtils = {
     valueToDataType: (nodeType: Value['type']) => ( valueToDataTypeMap[nodeType] ),
-    convertValueToText
+    convertValueToText,
+    lexemeToDataTypeMap
 };

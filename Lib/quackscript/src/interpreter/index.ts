@@ -222,10 +222,17 @@ export default class Interpreter {
             const argResult = this.executeExpressionNode(arg);
             if (argResult === null) throw new Error('null as parameter not allowed yet');
             const dataType = DataTypeUtils.valueToDataType(argResult.type);
-            this._memory.set(param.value, {
+
+            // TODO - move to library
+            if (dataType !== param.dataType.value) {
+                throw new RuntimeException(argResult.position, 
+                    `Expected argument of type ${param.dataType.value} but got ${dataType}`);
+            }
+
+            this._memory.set(param.identifier.value, {
                 declarationType: 'argument',
-                identifier: param.value,
-                type: dataType,
+                identifier: param.identifier.value,
+                type: param.dataType.value,
                 value: argResult,
                 internalType: null,
             });

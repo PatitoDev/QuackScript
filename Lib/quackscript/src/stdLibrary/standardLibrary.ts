@@ -1,4 +1,4 @@
-import { InternalFuncDeclarationNode, TextLiteralNode } from '../parser/types';
+import { DataTypes, InternalFuncDeclarationNode, TextLiteralNode } from '../parser/types';
 import { Memory } from '../interpreter/memory';
 import { MemoryValue, Value } from '../interpreter/types';
 import { Position } from '../types/Position';
@@ -36,9 +36,12 @@ const execQuackPrint = (memory: Memory, system: System): Value => {
 
 const _standardLibrary: Array<{
     identifier: string,
-    params: Array<string>
+    params: Array<{ identifier: string, dataType: DataTypes }>
 }> = [
-    { identifier: 'quackprint', params: ['value'] },
+    { identifier: 'quackprint', params: [{ 
+        dataType: 'text',
+        identifier: 'value'
+    }] },
 ];
 
 const standardLibrary: Record<string, MemoryValue> = _standardLibrary

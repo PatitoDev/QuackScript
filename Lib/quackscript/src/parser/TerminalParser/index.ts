@@ -1,5 +1,7 @@
 import { ParseException } from '../../exception/ParseException';
+import { DataTypeLexemes } from '../../types/Lexemes';
 import { Token } from '../../types/Token';
+import { DataTypeUtils } from '../../utils/dataTypes/dataTypeUtils';
 import { Cursor } from '../Cursor';
 import { AssignmentOperatorNode, BooleanLiteralNode, DataTypeNode, IdentifierNode, LiteralNode, MathematicalOperatorTypes, NothingLiteralNode, NumberLiteralNode, OptionalDataType, TerminatorNode, TextLiteralNode } from '../types';
 
@@ -159,73 +161,23 @@ export class TerminalParser {
 
     protected dataType = (): DataTypeNode | null => {
         const possibleDataType = this._cursor.readCurrentToken();
+        if (!possibleDataType) return null;
 
-        let value: DataTypeNode | null = null;
-        switch (possibleDataType?.type) {
-        case 'OPTIONAL_TYPE':
+        if (possibleDataType.type === 'OPTIONAL_TYPE'){
             this._cursor.advanceCursor(1);
             return this.optionalDataType();
-        case 'TEXT_TYPE':
-            value = {
-                type: 'DataType',
-                value: 'text',
-                position: possibleDataType.position
-            };
-            break;
-        case 'NUMBER_TYPE':
-            return {
-                type: 'DataType',
-                value: 'number',
-                position: possibleDataType.position
-            };
-        case 'BOOLEAN_TYPE':
-            value = {
-                type: 'DataType',
-                value: 'boolean',
-                position: possibleDataType.position
-            };
-            break;
-        case 'NOTHING':
-            value = {
-                type: 'DataType',
-                value: 'nothing',
-                position: possibleDataType.position
-            };
-            break;
-        case 'ARROW_FUNCTION':
-            value = {
-                type: 'DataType',
-                value: 'func',
-                position: possibleDataType.position
-            };
-            break;
-        case 'FUNC_TYPE':
-            value = {
-                type : 'DataType',
-                value: 'func',
-                position: possibleDataType.position
-            };
-            break;
-        case 'VECTOR2':
-            value = {
-                type : 'DataType',
-                value: 'vector2',
-                position: possibleDataType.position
-            };
-            break;
-        case 'VECTOR3':
-            value = {
-                type : 'DataType',
-                value: 'vector3',
-                position: possibleDataType.position
-            };
+        }
+        if (!(possibleDataType.type in DataTypeUtils.lexemeToDataTypeMap)) {
+            return null;
         }
 
-        if (value) {
-            this._cursor.advanceCursor(1);
-        }
-
-        return value;
+        this._cursor.advanceCursor(1);
+        const dataType = DataTypeUtils.lexemeToDataTypeMap[possibleDataType.type as DataTypeLexemes];
+        return {
+            type: 'DataType',
+            value: dataType,
+            position: possibleDataType.position
+        };
     };
 
     // <dataType> := <colon> <data-type> | <optional-type>

@@ -9,8 +9,6 @@ export const tokenMap: Record<Lexemes, RegExp> = {
 
     'NUMBER_VALUE': /^[0-9]+(\.[0-9])?[0-9]*/,
 
-    'NUMBER_TYPE': /^number(?=[^a-z-A-Z0-9]|$)/,
-
     'WHITESPACE': /^[^\S\n]+/,
 
     'NEW_LINE': /^\n/,
@@ -74,6 +72,8 @@ export const tokenMap: Record<Lexemes, RegExp> = {
     'ELSE': /^else(?=[^a-z-A-Z0-9]|$)/,
 
     'OPTIONAL_TYPE': /^optional(?=[^a-zA-Z0-9]|$)/,
+
+    'NUMBER_TYPE': /^number(?=[^a-z-A-Z0-9]|$)/,
 
     'TEXT_TYPE': /^text(?=[^a-zA-Z0-9]|$)/,
 

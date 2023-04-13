@@ -24,6 +24,7 @@ export type NodeTypes = LiteralNodeTypes |
     'Statement' |
     'Return' |
     'Args' |
+    'Param' |
     'Params' |
     'FuncCallNode' |
     'CodeBlock' |
@@ -88,8 +89,13 @@ export interface ArgsNode extends Node<'Args'> {
 }
 
 /* Declaration */
+export interface ParamNode extends Node<'Param'> {
+    identifier: IdentifierNode,
+    dataType: DataTypeNode
+}
+
 export interface ParamsNode extends Node<'Params'> {
-    params: Array<IdentifierNode>,
+    params: Array<ParamNode>,
 }
 
 export interface FuncCallNode extends Node<'FuncCallNode'> {

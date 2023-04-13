@@ -14,21 +14,25 @@ type MathematicalLexemes = 'ADDITION' |
     'MODULUS' |
     'DIVISION';
 
-type DataTypeLexemes = 'NOTHING' | 
+export type DataTypeLexemes = 'NOTHING' | 
     'FUNC_TYPE' |
-    'BOOLEAN_VALUE' |
     'BOOLEAN_TYPE' |
     'TEXT_TYPE' |
+    'NUMBER_TYPE' |
+    'OPTIONAL_TYPE';
+
+
+export type DataValueLexemes = 'NOTHING' | 
+    'BOOLEAN_VALUE' |
     'TEXT_VALUE' |
     'NUMBER_VALUE' |
-    'NUMBER_TYPE' |
     'VECTOR2' |
-    'VECTOR3' | 
-    'OPTIONAL_TYPE';
+    'VECTOR3';
 
 export type Lexemes = LogicalOperatorLexemes |
     ComparisonOperatorLexemes |
     MathematicalLexemes |
+    DataValueLexemes |
     DataTypeLexemes |
     'IMPORT' |
     'ASSIGNMENT_OPERATOR' |

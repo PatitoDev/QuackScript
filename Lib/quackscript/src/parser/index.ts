@@ -6,12 +6,13 @@ import {
     AssignmentNode, BinaryExpressionNode, 
     DeclarationNode, ExpressionNode,
     FuncCallNode,
-    IdentifierNode, ModuleNode,
+    ModuleNode,
     ArgsNode,
     StatementNode, FuncDeclarationNode, CodeBlockNode, ParamsNode, ReturnStatementNode,
     TextLiteralNode, NothingLiteralNode, IfStatementNode,
     ImportStatementNode, 
     AccessorExpressionNode,
+    ParamNode,
 } from './types';
 
 
@@ -239,24 +240,37 @@ export default class Parser extends TerminalParser {
     };
 
     /*
-        <params> := <identifier> <comma> <params> | <identifier>
+        <param> := <identifier> <data-type-declaration>
+    */
+    private param = ():ParamNode | null => {
+        const identifier = this.identifier();
+        if (!identifier) return null;
+        const dataTypeNode = this.dataTypeDeclaration();
+        if (!dataTypeNode) {
+            throw new ParseException(this._cursor.getCurrentPositionOrLastVisited(), 'Parameter must have a data type');
+        }
+        return {
+            dataType: dataTypeNode,
+            identifier: identifier,
+            position: identifier.position,
+            type: 'Param'
+        };
+    };
+
+    /*
+        <params> := <param> <comma> <params> |<param>
     */
     private params = ():ParamsNode | null => {
-        const id = this._cursor.readCurrentToken();
-        if (id?.type !== 'IDENTIFIER') return null;
-
-        const identifierNode:IdentifierNode = {
-            type: 'Identifier',
-            value: id.value,
-            position: id.position
-        };
+        const param = this.param();
+        if (!param) {
+            return null;
+        }
 
         const paramNode:ParamsNode = {
-            params: [identifierNode],
+            params: param ? [param] : [],
             type: 'Params',
-            position: id.position
+            position: param.position
         };
-        this._cursor.advanceCursor(1);
 
         const comma = this._cursor.readCurrentToken();
         if (comma?.type === 'COMMA'){

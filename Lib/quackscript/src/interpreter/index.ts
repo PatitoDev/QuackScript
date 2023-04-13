@@ -47,6 +47,7 @@ export default class Interpreter {
         try {
             this.executeModule(tree);
         } catch (er) {
+            console.log(er);
             if (er instanceof RuntimeException) {
                 this._system.stderr(er.toString());
                 return;
@@ -270,6 +271,7 @@ export default class Interpreter {
         case 'Vector2Literal':
         case 'Vector3Literal':
         case 'NumberLiteral':
+            console.log(node);
             return node.body;
         case 'FuncCallNode':
             return this.executeFunctionCall(node.body as FuncCallNode);

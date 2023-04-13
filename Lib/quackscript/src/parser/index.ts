@@ -502,14 +502,17 @@ export default class Parser extends TerminalParser {
             'Expected declaration'
         );
 
+        const nothingLiteral: NothingLiteralNode = {
+            type: 'NothingLiteral',
+            position: token.position
+        };
+
         const assignment: AssignmentNode = {
             type: 'Assignment',
             identifier,
             expression: {
                 type: 'Expression',
-                body: {
-                    type: 'NothingLiteral'
-                } as NothingLiteralNode,
+                body: nothingLiteral,
                 position: token.position
             },
             position: token.position

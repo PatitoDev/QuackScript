@@ -1,14 +1,15 @@
-import Lexer, { Token } from '..';
+import Lexer  from '..';
+import { Token } from '../../types/Token';
 
 describe('Lexer Identifiers - ', () => {
     test('can parse a single char', () => {
         const lexer = new Lexer();
         const outcome = lexer.convertToTokens('a');
         expect(outcome).toEqual([{
-            placement: {
-                char: 0,
+            position: {
+                char: 1,
                 line: 1,
-                start: 0,
+                start: 1,
             },
             type: 'IDENTIFIER',
             value: 'a'

@@ -95,6 +95,7 @@ export class Memory {
                 ...value,
                 value: valueToSave
             };
+            console.log(value.value);
             return;
         }
 

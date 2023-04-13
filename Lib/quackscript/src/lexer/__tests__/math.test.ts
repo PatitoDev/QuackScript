@@ -1,4 +1,5 @@
-import Lexer, { Token }  from '..';
+import Lexer  from '..';
+import { Token } from '../../types/Token';
 
 describe('Lexer Math - ', () => {
 
@@ -6,12 +7,12 @@ describe('Lexer Math - ', () => {
         const lexer = new Lexer();
         const output = lexer.convertToTokens('1');
         expect(output).toEqual([{
-            placement: {
-                char: 0,
+            position: {
+                char: 1,
                 line: 1,
-                start: 0,
+                start: 1,
             },
-            type: 'NUMBER',
+            type: 'NUMBER_VALUE',
             value: '1'
         }] as Array<Token>);
     });
@@ -20,12 +21,12 @@ describe('Lexer Math - ', () => {
         const lexer = new Lexer();
         const output = lexer.convertToTokens('112312.1234102');
         expect(output).toEqual([{
-            placement: {
-                char: 0,
+            position: {
+                char: 1,
                 line: 1,
-                start: 0,
+                start: 1,
             },
-            type: 'NUMBER',
+            type: 'NUMBER_VALUE',
             value: '112312.1234102'
         }] as Array<Token>);
     });
@@ -35,48 +36,48 @@ describe('Lexer Math - ', () => {
         const output = lexer.convertToTokens('1 + 2');
         expect(output).toEqual([
             {
-                placement: {
-                    char: 0,
-                    line: 1,
-                    start: 0,
-                },
-                type: 'NUMBER',
-                value: '1'
-            },
-            {
-                placement: {
+                position: {
                     char: 1,
                     line: 1,
                     start: 1,
+                },
+                type: 'NUMBER_VALUE',
+                value: '1'
+            },
+            {
+                position: {
+                    char: 2,
+                    line: 1,
+                    start: 2,
                 },
                 type: 'WHITESPACE',
                 value: ' '
             },
             {
-                placement: {
-                    char: 2,
+                position: {
+                    char: 3,
                     line: 1,
-                    start: 2,
+                    start: 3,
                 },
                 type: 'ADDITION',
                 value: '+'
             },
             {
-                placement: {
-                    char: 3,
+                position: {
+                    char: 4,
                     line: 1,
-                    start: 3,
+                    start: 4,
                 },
                 type: 'WHITESPACE',
                 value: ' '
             },
             {
-                placement: {
-                    char: 4,
+                position: {
+                    char: 5,
                     line: 1,
-                    start: 4,
+                    start: 5,
                 },
-                type: 'NUMBER',
+                type: 'NUMBER_VALUE',
                 value: '2'
             },
         ] as Array<Token>);

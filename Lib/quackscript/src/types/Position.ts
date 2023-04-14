@@ -1,5 +1,5 @@
 export interface Position {
-    start: number,
+    globalChar: number,
     line: number,
-    char: number
+    lineChar: number
 }

@@ -15,14 +15,14 @@ export class RuntimeException {
     }
 
     toString() {
-        let msg = `Runtime Error: In line ${this.position.line} at char ${this.position.char}\n  ${this.message}`;
+        let msg = `Runtime Error: In line ${this.position.line} at char ${this.position.lineChar}\n  ${this.message}`;
 
         if (this.code !== null) {
             console.log(this.position);
             const line = this.code.split('\n')[this.position.line - 1];
             if (line) {
                 msg += `\n${line}\n`;
-                msg += '^'.padStart(this.position.char + 1);
+                msg += '^'.padStart(this.position.lineChar + 1);
             }
         }
         return msg;

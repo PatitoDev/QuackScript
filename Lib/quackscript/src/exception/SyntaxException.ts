@@ -12,6 +12,6 @@ export class SyntaxException {
     }
 
     toString() {
-        return `Syntax Error: In line ${this.placement.line} at char ${this.placement.char} \n ${this.message}`;
+        return `Syntax Error: In line ${this.placement.line} at char ${this.placement.lineChar} \n ${this.message}`;
     }
 }

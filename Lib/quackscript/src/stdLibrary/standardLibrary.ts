@@ -8,9 +8,9 @@ import { RuntimeException } from '../exception/RuntimeException';
 
 
 const fakePosition:Position = {
-    char: 0,
+    globalChar: 0,
     line: 0,
-    start: 0
+    lineChar: 0
 };
 
 export const executeInternalFunc = (node: InternalFuncDeclarationNode,

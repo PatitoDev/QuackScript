@@ -31,9 +31,9 @@ export default class Parser extends TerminalParser {
             type: 'Module',
             statements: [],
             position: {
-                char: 0,
-                line: 0,
-                start: 0,
+                globalChar: 1,
+                line: 1,
+                lineChar: 1,
             }
         };
 

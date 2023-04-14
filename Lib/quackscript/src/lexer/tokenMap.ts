@@ -1,7 +1,7 @@
 import { Lexemes } from '../types/Lexemes';
 
 export const tokenMap: Record<Lexemes, Array<RegExp>> = {
-    'COMMENT_SHORT': [/^\/\/.*?\n/],
+    'COMMENT_SHORT': [/^\/\/.*?(\n|$)/],
 
     'COMMENT_LONG': [/^\/\*(\s|\S)*\*\//],
 
@@ -50,8 +50,6 @@ export const tokenMap: Record<Lexemes, Array<RegExp>> = {
 
     'COMMA': [/^,/],
 
-    'ARROW_FUNCTION': [/^->/],
-
     'AND': [/^&&/],
 
     'OR': [/^\|\|/],
@@ -82,7 +80,7 @@ export const tokenMap: Record<Lexemes, Array<RegExp>> = {
 
     'BOOLEAN_VALUE': [/^true|^false(?=[^a-zA-Z0-9]|$)/],
 
-    'BOOLEAN_TYPE': [/^bool(?=[^a-zA-Z0-9]|$)/],
+    'BOOLEAN_TYPE': [/^boolean(?=[^a-zA-Z0-9]|$)/],
 
     'NOTHING': [/^nothing(?=[^a-zA-Z0-9]|$)/],
 

@@ -36,7 +36,6 @@ export type Lexemes = LogicalOperatorLexemes |
     DataTypeLexemes |
     'IMPORT' |
     'ASSIGNMENT_OPERATOR' |
-    'ARROW_FUNCTION' |
     'TERMINATOR' |
     'ASSIGNMENT_LET' |
     'ASSIGNMENT_CONST' |

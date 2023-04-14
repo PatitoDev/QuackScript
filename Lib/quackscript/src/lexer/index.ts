@@ -70,8 +70,6 @@ export default class Lexer {
         };
 
         const tokenKeys = Object.keys(tokenMap) as Array<Lexemes>;
-        if (code.trim().length === 0) return [];
-
         tokenLoop:while (code.length) {
             for (const tokenKey of tokenKeys) {
                 const result = this.parseToken(code, tokenKey);

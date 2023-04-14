@@ -8,9 +8,9 @@ describe('Lexer Math - ', () => {
         const output = lexer.convertToTokens('1');
         expect(output).toEqual([{
             position: {
-                char: 1,
+                lineChar: 1,
                 line: 1,
-                start: 1,
+                globalChar: 1,
             },
             type: 'NUMBER_VALUE',
             value: '1'
@@ -22,9 +22,9 @@ describe('Lexer Math - ', () => {
         const output = lexer.convertToTokens('112312.1234102');
         expect(output).toEqual([{
             position: {
-                char: 1,
+                lineChar: 1,
                 line: 1,
-                start: 1,
+                globalChar: 1,
             },
             type: 'NUMBER_VALUE',
             value: '112312.1234102'
@@ -37,45 +37,45 @@ describe('Lexer Math - ', () => {
         expect(output).toEqual([
             {
                 position: {
-                    char: 1,
+                    lineChar: 1,
                     line: 1,
-                    start: 1,
+                    globalChar: 1,
                 },
                 type: 'NUMBER_VALUE',
                 value: '1'
             },
             {
                 position: {
-                    char: 2,
+                    lineChar: 2,
                     line: 1,
-                    start: 2,
+                    globalChar: 2,
                 },
                 type: 'WHITESPACE',
                 value: ' '
             },
             {
                 position: {
-                    char: 3,
+                    lineChar: 3,
                     line: 1,
-                    start: 3,
+                    globalChar: 3,
                 },
                 type: 'ADDITION',
                 value: '+'
             },
             {
                 position: {
-                    char: 4,
+                    lineChar: 4,
                     line: 1,
-                    start: 4,
+                    globalChar: 4,
                 },
                 type: 'WHITESPACE',
                 value: ' '
             },
             {
                 position: {
-                    char: 5,
+                    lineChar: 5,
                     line: 1,
-                    start: 5,
+                    globalChar: 5,
                 },
                 type: 'NUMBER_VALUE',
                 value: '2'

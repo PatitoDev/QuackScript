@@ -3,9 +3,9 @@ import { DataTypes, InternalFuncDeclarationNode, ParamNode } from '../../parser/
 import { Position } from '../../types/Position';
 
 const fakePosition:Position = {
-    char: 0,
-    line: 0,
-    start: 0
+    globalChar: 1,
+    line: 1,
+    lineChar: 1
 };
 
 const convertToInternalFunc = (identifier: string, params: Array<{

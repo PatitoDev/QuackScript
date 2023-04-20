@@ -17,7 +17,7 @@ const MainHome = () => (
                 variant="body" 
                 textColor="gray"
             >Game ready and compatible with web and mobile devices</Typography>
-            <Button variant="outline" >Get Started</Button>
+            <Button onClick={() => location.href = '/docs/#getting-started'} variant="outline" >Get Started</Button>
         </S.Container>
         <S.Image>
             <Duck />

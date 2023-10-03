@@ -7,5 +7,11 @@ export const theme: DefaultTheme = {
         primary: '#FFD953',
         white: '#E4E4E4',
         darkGray: '#313034',
+    },
+    media: {
+        mobile: 'max-width: 800px',
+    },
+    sizes: {
+        desktopMaxWidth: '1500px',
     }
 };

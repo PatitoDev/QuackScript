@@ -6,6 +6,10 @@ export const Container = styled.div`
     padding: 0 1.5em 1.5em 1.5em;
     border-radius: 10px;
     max-width: 100%;
+
+    @media screen and (${({ theme }) => theme.media.mobile}) {
+        padding: 0.5em;
+    }
 `;
 
 export const CodeWindowContent = styled.div`
@@ -25,6 +29,9 @@ export const CodeWindowHeader = styled.div`
     padding: 1.5em 1em;
     display: flex;
     gap: 0.5em;
+    @media screen and (${({ theme }) => theme.media.mobile}) {
+        padding: 0.8em 0.5em;
+    }
 `;
 
 export const Divider = styled.div`

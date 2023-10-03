@@ -1,4 +1,5 @@
 .editor {
+    border-radius: 3px;
     padding: 0.5em;
-    background-color: white;
+    background-color: rgb(228, 228, 228);
 }

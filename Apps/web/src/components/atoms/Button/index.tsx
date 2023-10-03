@@ -3,8 +3,24 @@ import styled, { css } from 'styled-components';
 export type ButtonVariant = 'solid' | 'outline';
 
 const Button = styled.button<{
-    variant?: ButtonVariant
+    size?: 'sm' | 'md'
+    variant?: ButtonVariant,
+    mobileOnly?: boolean
 }>`
+    ${({ mobileOnly }) => mobileOnly && css`
+        @media screen and not (${({ theme }) => theme.media.mobile}) {
+            display: none;
+        }
+    `}
+
+    @media screen and (${({ theme }) => theme.media.mobile}) {
+        padding: ${({ size = 'md' }) => size === 'md' ? '1em' : '0.5em'};
+        font-size: 1em;
+    }
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     border: none;
     border-radius: 5px;
@@ -14,6 +30,9 @@ const Button = styled.button<{
 
     ${({ variant = 'solid', theme }) => variant === 'outline' && css`
         box-shadow: inset 0 0 0 4px ${theme.colors.primary};
+        @media screen and (${({ theme }) => theme.media.mobile}) {
+            box-shadow: inset 0 0 0 2px ${theme.colors.primary};
+        }
         color: ${theme.colors.primary};
         background-color: transparent;
         :hover {
@@ -28,9 +47,7 @@ const Button = styled.button<{
     `}
 
     :focus-within {
-        outline: none;
-        background-color: ${({ theme }) => theme.colors.darkGray};
-        box-shadow: inset 0 0 0 4px ${({ theme }) => theme.colors.darkGray};
+        outline: 3px ${({ theme }) => theme.colors.gray } solid
     }
 `;
 

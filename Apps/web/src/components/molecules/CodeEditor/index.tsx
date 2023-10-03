@@ -5,14 +5,22 @@ import { useTheme } from 'styled-components';
 import './style.css';
 
 const EDITOR_OPTIONS = {
-    fontSize: 23,
+    fontSize: 18,
     automaticLayout: true,
+    lineNumbersMinChars: 2,
+    minimap: {
+        enabled: false
+    },
+    scrollbar: {
+        verticalScrollbarSize: 3,
+        horizontalScrollbarSize: 3
+    },
+    lineDecorationsWidth: 0,
 };
-
 
 interface Word {
     startColumn: number,
-    endColumn: number
+    endColumn: number,
 }
 
 interface Model {
@@ -33,7 +41,6 @@ const CodeEditor = (props: EditorProps) => {
         if (monaco) {
             const hasLanguage = (monaco.languages.getLanguages().find((lang: {id: string}) => lang.id === 'quackscript' ));
             if (!hasLanguage) {
-                console.log('added language');
                 monaco.languages.register({ id: 'quackscript' });
                 monaco.languages.setMonarchTokensProvider('quackscript', {
                     tokenizer: {

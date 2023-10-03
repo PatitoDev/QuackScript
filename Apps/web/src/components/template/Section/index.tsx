@@ -6,12 +6,13 @@ const Section = styled.section<{
     direction?: 'row' | 'column'
     center?: boolean,
 }>`
+
     display: flex;
     flex-direction: ${({ direction = 'row' }) => direction};
     background-color: ${({ theme, bgColor = 'black' }) => theme.colors[bgColor] };
     padding: 120px;
-    ${({ variant ='sm' }) => variant === 'sm' && css`
-        padding: 120px 260px;
+    ${({ variant = 'sm' }) => variant === 'sm' && css`
+        padding: 120px 0;
     `};
 
     ${({ center }) => center && css`

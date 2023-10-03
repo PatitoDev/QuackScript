@@ -3,6 +3,30 @@ import { useEffect, useRef } from 'react';
 
 const MAX_DISTANCE = 15;
 
+const isMobileUserAgent = () => {
+    const toMatch = [
+        /Android/i,
+        /webOS/i,
+        /iPhone/i,
+        /iPad/i,
+        /iPod/i,
+        /BlackBerry/i,
+        /Windows Phone/i
+    ];
+    
+    return toMatch.some((toMatchItem) => {
+        return navigator.userAgent.match(toMatchItem);
+    });
+};
+
+function getRandomInt(min: number, max: number) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const TIME_TO_MOVE_EYES = 1000;
+
 const Duck = () => {
     const leftContainer = useRef<SVGCircleElement | null>(null);
     const leftEye = useRef<SVGCircleElement | null>(null);
@@ -10,43 +34,59 @@ const Duck = () => {
     const rightEye = useRef<SVGCircleElement | null>(null);
 
     useEffect(() => {
-        const onMouseMove = (e: MouseEvent) => {
-            const x = e.clientX;
-            const y = e.clientY;
+        const isMobile = isMobileUserAgent();
+        if (!isMobile) return;
+        const onTimeout = () => {
+            const x = getRandomInt(0, screen.availWidth);
+            const y = getRandomInt(0, screen.availHeight);
+            moveEyes(x, y);
+            console.log('moved eyes to ', x, y);
+            setTimeout(onTimeout, TIME_TO_MOVE_EYES);
+        };
+        onTimeout();
+    }, []);
 
-            if (!leftEye.current ||
+    const moveEyes = (x: number, y: number) => {
+        if (!leftEye.current ||
                 !rightEye.current ||
                 !leftContainer.current ||
                 !rightEyeContainer.current) return;
 
-            // Get the center point of each eye
-            const leftEyeRect = leftContainer.current.getBoundingClientRect();
-            const leftEyeX = leftEyeRect.left + leftEyeRect.width / 2;
-            const leftEyeY = leftEyeRect.top + leftEyeRect.height / 2;
+        // Get the center point of each eye
+        const leftEyeRect = leftContainer.current.getBoundingClientRect();
+        const leftEyeX = leftEyeRect.left + leftEyeRect.width / 2;
+        const leftEyeY = leftEyeRect.top + leftEyeRect.height / 2;
 
-            const rightEyeRect = rightEyeContainer.current.getBoundingClientRect();
-            const rightEyeX = rightEyeRect.left + rightEyeRect.width / 2;
-            const rightEyeY = rightEyeRect.top + rightEyeRect.height / 2;
+        const rightEyeRect = rightEyeContainer.current.getBoundingClientRect();
+        const rightEyeX = rightEyeRect.left + rightEyeRect.width / 2;
+        const rightEyeY = rightEyeRect.top + rightEyeRect.height / 2;
 
-            // Calculate the distance between the cursor position and each eye center
-            const leftEyeDistance = Math.sqrt(Math.pow(x - leftEyeX, 2) + Math.pow(y - leftEyeY, 2));
-            const rightEyeDistance = Math.sqrt(Math.pow(x - rightEyeX, 2) + Math.pow(y - rightEyeY, 2));
+        // Calculate the distance between the cursor position and each eye center
+        const leftEyeDistance = Math.sqrt(Math.pow(x - leftEyeX, 2) + Math.pow(y - leftEyeY, 2));
+        const rightEyeDistance = Math.sqrt(Math.pow(x - rightEyeX, 2) + Math.pow(y - rightEyeY, 2));
 
-            // Calculate the distance to move each eye based on its distance to the cursor
-            const leftEyeMoveDistance = Math.min(leftEyeDistance, MAX_DISTANCE);
-            const rightEyeMoveDistance = Math.min(rightEyeDistance, MAX_DISTANCE);
+        // Calculate the distance to move each eye based on its distance to the cursor
+        const leftEyeMoveDistance = Math.min(leftEyeDistance, MAX_DISTANCE);
+        const rightEyeMoveDistance = Math.min(rightEyeDistance, MAX_DISTANCE);
 
-            // Calculate the angle between the cursor position and each eye center
-            const leftEyeAngle = Math.atan2(y - leftEyeY, x - leftEyeX) * (180 / Math.PI) + 180;
-            const rightEyeAngle = Math.atan2(y - rightEyeY, x - rightEyeX) * (180 / Math.PI);
+        // Calculate the angle between the cursor position and each eye center
+        const leftEyeAngle = Math.atan2(y - leftEyeY, x - leftEyeX) * (180 / Math.PI) + 180;
+        const rightEyeAngle = Math.atan2(y - rightEyeY, x - rightEyeX) * (180 / Math.PI);
 
-            const leftRotationTransformation = `rotate(${Math.floor(leftEyeAngle)}deg)`;
-            const leftTranslationTransformation = `translate(${leftEyeMoveDistance}px)`;
-            leftEye.current.style.transform = `${leftRotationTransformation} ${leftTranslationTransformation}`;
+        const leftRotationTransformation = `rotate(${Math.floor(leftEyeAngle)}deg)`;
+        const leftTranslationTransformation = `translate(${leftEyeMoveDistance}px)`;
+        leftEye.current.style.transform = `${leftRotationTransformation} ${leftTranslationTransformation}`;
 
-            const rightRotationTransformation = `rotate(${Math.floor(rightEyeAngle)}deg)`;
-            const rightTranslationTransformation = `translate(${rightEyeMoveDistance}px)`;
-            rightEye.current.style.transform = `${rightRotationTransformation} ${rightTranslationTransformation}`;
+        const rightRotationTransformation = `rotate(${Math.floor(rightEyeAngle)}deg)`;
+        const rightTranslationTransformation = `translate(${rightEyeMoveDistance}px)`;
+        rightEye.current.style.transform = `${rightRotationTransformation} ${rightTranslationTransformation}`;
+    };
+
+    useEffect(() => {
+        const onMouseMove = (e: MouseEvent) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            moveEyes(x, y);
         };
 
         document.addEventListener('mousemove', onMouseMove);
@@ -54,7 +94,7 @@ const Duck = () => {
         return () => {
             document.removeEventListener('mousemove', onMouseMove);
         };
-    }, []);
+    }, [moveEyes]);
 
     return (
         <svg width="916" height="892" viewBox="0 0 916 892" fill="none" xmlns="http://www.w3.org/2000/svg">

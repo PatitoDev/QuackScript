@@ -8,6 +8,12 @@ declare module 'styled-components' {
         gray: string,
         darkGray: string,
         white: string
+    },
+    media: {
+      mobile: string,
+    }
+    sizes: {
+      desktopMaxWidth: string
     }
   }
 }

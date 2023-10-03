@@ -11,4 +11,4 @@ Quackscript is still in development so things **will** change
 
 ## Getting Started
 
-Get started in the quackscript playground **[Quackscript Playground](https://dev.quackscript.com)**.
+Get started in the quackscript playground **[Quackscript Playground](https://quackscript.com)**.

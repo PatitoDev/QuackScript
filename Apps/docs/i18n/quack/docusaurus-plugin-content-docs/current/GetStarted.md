@@ -11,4 +11,4 @@ Quack quack quack quack quack quack quack **quack** quack
 
 ## Quack quack
 
-Quack quack quack quack quackscript quack **[Quack quack](https://dev.quackscript.com)**.
+Quack quack quack quack quackscript quack **[Quack quack](https://quackscript.com)**.

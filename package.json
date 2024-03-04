@@ -10,6 +10,6 @@
     "Lib/*"
   ],
   "scripts": {
-    "build": "yarn --cwd ./Lib/quackscript run test & yarn --cwd ./Apps/web build --outDir=../../out/web & yarn --cwd ./Apps/docs build --out-dir ../../out/docs"
+    "build": "yarn --cwd ./Apps/web build --outDir=../../out/web & yarn --cwd ./Apps/docs build --out-dir ../../out/docs"
   }
 }

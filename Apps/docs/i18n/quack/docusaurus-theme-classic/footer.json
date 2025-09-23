@@ -25,7 +25,7 @@
   },
   "link.item.label.GitHub": {
     "message": "QuackHub",
-    "description": "The label of footer link with label=GitHub linking to https://github.com/niv3k-el-pato/quackscript"
+    "description": "The label of footer link with label=GitHub linking to https://github.com/em1dev/quackscript"
   },
   "copyright": {
     "message": "Copyright © 2023 QuackScript",

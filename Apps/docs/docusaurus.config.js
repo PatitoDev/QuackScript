@@ -12,7 +12,7 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://dev.niv3kelpato.com/',
+  url: 'https://quackscript.com/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/docs/',
@@ -84,7 +84,7 @@ const config = {
             position: 'right',
           },
           {
-            href: 'https://github.com/niv3k-el-pato/quackscript',
+            href: 'https://github.com/em1dev/quackscript',
             label: 'GitHub',
             position: 'right',
           },
@@ -120,7 +120,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/niv3k-el-pato/quackscript',
+                href: 'https://github.com/em1dev/quackscript',
               },
             ],
           },

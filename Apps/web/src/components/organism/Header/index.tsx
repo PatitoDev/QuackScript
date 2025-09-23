@@ -11,7 +11,7 @@ const routes: Array<{
 }> = [
     { displayName: 'Home', route: '/' },
     { displayName: 'Docs', route: '/docs' },
-    { displayName: 'Github', route: 'https://github.com/niv3k-el-pato/quackscript' },
+    { displayName: 'Github', route: 'https://github.com/em1dev/quackscript' },
 ];
 
 const OverflowDisabled = createGlobalStyle`
